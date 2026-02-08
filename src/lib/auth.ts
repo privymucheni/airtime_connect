@@ -26,6 +26,7 @@ export const authOptions: NextAuthOptions = {
 
                 const user = await prisma.user.findUnique({
                     where: { email: credentials.email },
+                    include: { wallet: true }
                 });
 
                 if (!user || !user.password) {
@@ -46,7 +47,7 @@ export const authOptions: NextAuthOptions = {
                     name: user.name,
                     email: user.email,
                     role: user.role,
-                    balance: user.balance,
+                    balance: user.wallet?.balance || 0,
                     status: user.status,
                     companyName: user.companyName,
                 };
@@ -63,9 +64,14 @@ export const authOptions: NextAuthOptions = {
                 token.status = (user as any).status;
             }
 
-            // Handle balance updates dynamically if needed
-            if (trigger === "update" && session?.balance !== undefined) {
-                token.balance = session.balance;
+            // Fetch latest balance from DB if we want real-time tracking in session
+            if (trigger === "update" || !token.balance) {
+                const wallet = await prisma.wallet.findUnique({
+                    where: { userId: token.id as string }
+                });
+                if (wallet) {
+                    token.balance = wallet.balance;
+                }
             }
 
             return token;

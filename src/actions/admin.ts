@@ -23,6 +23,7 @@ export async function getAdminDashboardData() {
 
     const recentCompanies = await prisma.user.findMany({
         where: { role: UserRole.COMPANY },
+        include: { wallet: true },
         orderBy: { createdAt: "desc" },
         take: 5,
     });
@@ -49,6 +50,7 @@ export async function getAllCompanies() {
 
     return await prisma.user.findMany({
         where: { role: UserRole.COMPANY },
+        include: { wallet: true },
         orderBy: { createdAt: "desc" },
     });
 }
@@ -92,8 +94,8 @@ export async function createPromoCode(data: any) {
 
     const promo = await prisma.promoCode.create({
         data: {
-            code: data.code,
-            discountPercent: data.discountPercent,
+            code: data.code.toUpperCase(),
+            discountPercent: parseFloat(data.discountPercent),
             expiryDate: new Date(data.expiryDate),
             isActive: true,
         },
@@ -101,4 +103,44 @@ export async function createPromoCode(data: any) {
 
     revalidatePath("/admin/promo-codes");
     return { success: true, promo };
+}
+
+export async function getPromoCodes() {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== "ADMIN") {
+        throw new Error("Unauthorized");
+    }
+
+    return await prisma.promoCode.findMany({
+        orderBy: { createdAt: "desc" },
+    });
+}
+
+export async function deletePromoCode(id: string) {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== "ADMIN") {
+        throw new Error("Unauthorized");
+    }
+
+    await prisma.promoCode.delete({
+        where: { id },
+    });
+
+    revalidatePath("/admin/promo-codes");
+    return { success: true };
+}
+
+export async function togglePromoCodeStatus(id: string, isActive: boolean) {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== "ADMIN") {
+        throw new Error("Unauthorized");
+    }
+
+    await prisma.promoCode.update({
+        where: { id },
+        data: { isActive },
+    });
+
+    revalidatePath("/admin/promo-codes");
+    return { success: true };
 }

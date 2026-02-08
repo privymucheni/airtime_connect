@@ -1,90 +1,121 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { Building2, Mail, Lock, Bell, CreditCard, ChevronRight, Globe } from 'lucide-react';
+import { Building2, Mail, Lock, Bell, CreditCard, ChevronRight, Globe, CheckCircle2, AlertCircle, Loader2, User as UserIcon } from 'lucide-react';
+import { updateCompanyProfile } from '@/actions/company';
 
 const CompanySettings: React.FC = () => {
     const { user } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    const [formData, setFormData] = useState({
+        name: user?.name || '',
+        companyName: user?.companyName || '',
+        email: user?.email || '',
+    });
 
     if (!user) return null;
 
+    const handleSave = async () => {
+        setLoading(true);
+        setMessage(null);
+        try {
+            const res = await updateCompanyProfile(formData);
+            if (res.success) {
+                setMessage({ type: 'success', text: 'Profile updated successfully!' });
+                // We don't need to update state manually if revalidatePath works, 
+                // but the local state might need a refresh if context doesn't update immediately.
+            }
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message || 'Failed to update profile' });
+        } finally {
+            setLoading(false);
+            // Hide message after 3 seconds
+            setTimeout(() => setMessage(null), 3000);
+        }
+    };
+
     return (
-        <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500">
-            <div>
-                <h2 className="text-2xl font-bold text-gray-900">Account Settings</h2>
-                <p className="text-gray-500">Manage your company profile, billing, and security preferences.</p>
+        <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+            <div className="space-y-4">
+                <h1 className="text-6xl font-black text-gray-900 leading-tight tracking-tighter">Account <span className="text-indigo-600">Settings</span></h1>
+                <p className="text-xl text-gray-500 font-medium">Manage your company profile, billing, and security preferences.</p>
             </div>
 
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-gray-50">
-                    <h3 className="font-bold text-gray-900">General Information</h3>
+            {/* General Information Card */}
+            <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-200/50 overflow-hidden">
+                <div className="p-10 border-b border-gray-50 bg-gray-50/30">
+                    <h3 className="font-black text-2xl text-gray-900 flex items-center">
+                        <UserIcon className="w-7 h-7 mr-3 text-indigo-600" />
+                        General Information
+                    </h3>
                 </div>
-                <div className="p-8 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Company Name</label>
-                            <div className="relative">
-                                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <div className="p-10 space-y-8">
+                    {message && (
+                        <div className={`p-6 rounded-2xl flex items-center space-x-4 animate-in slide-in-from-top-2 duration-300 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'
+                            }`}>
+                            {message.type === 'success' ? <CheckCircle2 className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
+                            <span className="font-bold text-lg">{message.text}</span>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="space-y-3">
+                            <label className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Contact Person</label>
+                            <div className="relative group">
+                                <UserIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 w-6 h-6 transition-colors" />
                                 <input
                                     type="text"
-                                    defaultValue={user.companyName}
-                                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    className="w-full pl-14 pr-6 py-5 bg-gray-50 border-2 border-transparent rounded-2xl font-bold text-lg text-gray-900 outline-none focus:ring-4 ring-indigo-500/5 focus:border-indigo-100 transition-all"
+                                    placeholder="Enter full name"
                                 />
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Support Email</label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <div className="space-y-3">
+                            <label className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Company Name</label>
+                            <div className="relative group">
+                                <Building2 className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 w-6 h-6 transition-colors" />
+                                <input
+                                    type="text"
+                                    value={formData.companyName}
+                                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                                    className="w-full pl-14 pr-6 py-5 bg-gray-50 border-2 border-transparent rounded-2xl font-bold text-lg text-gray-900 outline-none focus:ring-4 ring-indigo-500/5 focus:border-indigo-100 transition-all"
+                                    placeholder="Enter company name"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            <label className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Email Address</label>
+                            <div className="relative group">
+                                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-600 w-6 h-6 transition-colors" />
                                 <input
                                     type="email"
-                                    defaultValue={user.email}
-                                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    className="w-full pl-14 pr-6 py-5 bg-gray-50 border-2 border-transparent rounded-2xl font-bold text-lg text-gray-900 outline-none focus:ring-4 ring-indigo-500/5 focus:border-indigo-100 transition-all"
+                                    placeholder="your@email.com"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="pt-4 border-t border-gray-50 flex justify-end">
-                        <button className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
-                            Save Changes
+                    <div className="pt-8 border-t border-gray-100 flex justify-end">
+                        <button
+                            onClick={handleSave}
+                            disabled={loading}
+                            className="flex items-center space-x-3 px-10 py-5 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed group"
+                        >
+                            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <CheckCircle2 className="w-6 h-6" />}
+                            <span className="text-lg">Save Profile Changes</span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6">
-                {[
-                    { icon: Lock, title: 'Security & Password', desc: 'Manage your password and 2FA settings', color: 'bg-amber-50 text-amber-600' },
-                    { icon: Bell, title: 'Notifications', desc: 'Configure alerts for distributions and low balance', color: 'bg-blue-50 text-blue-600' },
-                    { icon: CreditCard, title: 'Billing Details', desc: 'Tax info, invoices, and default payment methods', color: 'bg-purple-50 text-purple-600' },
-                    { icon: Globe, title: 'API & Integrations', desc: 'Access your credentials for automated distributions', color: 'bg-green-50 text-green-600' },
-                ].map((item, idx) => (
-                    <button key={idx} className="group flex items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-indigo-200 hover:shadow-md transition-all text-left">
-                        <div className="flex items-center space-x-4">
-                            <div className={`p-3 rounded-xl ${item.color} group-hover:scale-110 transition-transform`}>
-                                <item.icon className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-gray-900">{item.title}</h4>
-                                <p className="text-sm text-gray-500">{item.desc}</p>
-                            </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-indigo-500 transition-colors" />
-                    </button>
-                ))}
-            </div>
-
-            <div className="bg-red-50 border border-red-100 rounded-3xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h4 className="font-bold text-red-900">Deactivate Account</h4>
-                    <p className="text-sm text-red-700">Request account deletion. This action is permanent.</p>
-                </div>
-                <button className="px-6 py-2.5 bg-white border border-red-200 text-red-600 font-bold rounded-xl hover:bg-red-600 hover:text-white transition-all">
-                    Contact Support
-                </button>
-            </div>
         </div>
     );
 };

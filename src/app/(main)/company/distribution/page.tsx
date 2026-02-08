@@ -2,15 +2,21 @@
 
 import React, { useState, useRef } from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { User, Recipient } from '@/types';
-import { Upload, FileText, CheckCircle2, Zap, Send, Download } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+import { Recipient } from '@/types';
+import { Upload, FileText, CheckCircle2, Zap, Send, Download, AlertCircle } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { distributeAirtime } from '@/actions/company';
+import { useRouter } from 'next/navigation';
 
 const CompanyDistribution: React.FC = () => {
-  const { user } = useAuth();
+  const { user, update } = useAuth();
+  const router = useRouter();
   const [isProcessingCsv, setIsProcessingCsv] = useState(false);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
-  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [validationInfo, setValidationInfo] = useState<{ skipped: number, total: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
@@ -20,39 +26,116 @@ const CompanyDistribution: React.FC = () => {
     if (!file) return;
 
     setIsProcessingCsv(true);
+    setError(null);
+    setSuccessMessage(null);
+    setValidationInfo(null);
 
     const reader = new FileReader();
-    reader.onload = async (e) => {
-      const content = e.target?.result as string;
-      setTimeout(() => {
-        const dummyRecipients: Recipient[] = [
-          { name: 'John Doe', phoneNumber: '+1234567890', amount: 50, status: 'pending' },
-          { name: 'Jane Smith', phoneNumber: '+0987654321', amount: 75, status: 'pending' },
-          { name: 'Alice Johnson', phoneNumber: '+1122334455', amount: 100, status: 'pending' },
-          { name: 'Bob Wilson', phoneNumber: '+1998877665', amount: 50, status: 'pending' },
-        ];
-        setRecipients(dummyRecipients);
-        setIsProcessingCsv(false);
-        runAiCheck(content);
-      }, 1500);
-    };
-    reader.readAsText(file);
-  };
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-  const runAiCheck = async (csvContent: string) => {
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_API_KEY || '' });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Analyze this CSV snippet for bulk airtime distribution. Identify potential issues like invalid phone numbers, unusually high amounts, or missing names. Format the output as a friendly summary for the finance manager.\n\n${csvContent.substring(0, 500)}`,
-      });
-      setAiAnalysis(response.text || null);
-    } catch (err) {
-      console.error("Gemini analysis failed", err);
-    }
+        if (jsonData.length === 0) {
+          throw new Error("The uploaded file is empty.");
+        }
+
+        // Check for required headers
+        const firstRow = jsonData[0] as any;
+        const availableKeys = Object.keys(firstRow);
+        const keysLower = availableKeys.map(k => k.toLowerCase());
+
+        const phoneKeyActual = availableKeys.find((_, i) => keysLower[i].includes('phone') || keysLower[i].includes('number'));
+        const amountKeyActual = availableKeys.find((_, i) => keysLower[i].includes('amount') || keysLower[i].includes('credit') || keysLower[i].includes('value'));
+        const nameKeyActual = availableKeys.find((_, i) => keysLower[i].includes('name') || keysLower[i].includes('employee') || keysLower[i].includes('user'));
+
+        if (!phoneKeyActual || !amountKeyActual) {
+          throw new Error("File must contain columns for 'Phone Number' and 'Amount'.");
+        }
+
+        let skippedCount = 0;
+        const parsedRecipients: Recipient[] = [];
+
+        jsonData.forEach((row: any) => {
+          const phoneNumberRaw = String(row[phoneKeyActual] || '').trim();
+          const amountRaw = String(row[amountKeyActual] || '').trim().replace(/[$,]/g, '');
+          const amount = parseFloat(amountRaw);
+          const name = nameKeyActual ? String(row[nameKeyActual] || '').trim() : 'User';
+
+          if (!phoneNumberRaw || isNaN(amount) || amount <= 0) {
+            skippedCount++;
+            return;
+          }
+
+          // Remove all non-digit characters except +
+          const phoneNumber = phoneNumberRaw.replace(/[^\d+]/g, '');
+
+          parsedRecipients.push({
+            name: name || 'User',
+            phoneNumber: phoneNumber.startsWith('+') || phoneNumber.length > 10 ? phoneNumber : `+${phoneNumber}`,
+            amount,
+            status: 'pending'
+          });
+        });
+
+        if (parsedRecipients.length === 0) {
+          throw new Error("No valid records found. Ensure Phone Numbers and Amounts are correct.");
+        }
+
+        setRecipients(parsedRecipients);
+        setValidationInfo({ skipped: skippedCount, total: jsonData.length });
+      } catch (err: any) {
+        setError(err.message || "Failed to parse file. Please check the format.");
+      } finally {
+        setIsProcessingCsv(false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
   };
 
   const totalToDistribute = recipients.reduce((sum, r) => sum + r.amount, 0);
+  const hasSufficientBalance = user.balance >= totalToDistribute;
+
+  const handleExecute = async () => {
+    if (!hasSufficientBalance) {
+      setError("Insufficient wallet balance for this distribution.");
+      return;
+    }
+
+    setIsExecuting(true);
+    setError(null);
+
+    try {
+      const result = await distributeAirtime({ recipients });
+      if (result.success) {
+        setSuccessMessage(`Successfully distributed airtime to ${recipients.length} recipients.`);
+        setRecipients([]);
+        setValidationInfo(null);
+        // Update session to reflect new balance
+        await update();
+        // Optional: redirect to history after a delay
+        setTimeout(() => router.push('/company/history'), 3000);
+      }
+    } catch (err: any) {
+      setError(err.message || "Something went wrong during distribution.");
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
+  const downloadTemplate = () => {
+    const template = [
+      { "Employee Name": "John Doe", "Phone Number": "263771234567", "Amount": 50 },
+      { "Employee Name": "Jane Smith", "Phone Number": "263712345678", "Amount": 75 }
+    ];
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, "Airtime_Distribution_Template.xlsx");
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-500">
@@ -61,13 +144,30 @@ const CompanyDistribution: React.FC = () => {
         <p className="text-gray-500">Upload your spreadsheet to credit multiple numbers instantly.</p>
       </div>
 
+      {error && (
+        <div className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center space-x-3 text-red-700 animate-in fade-in zoom-in-95 duration-300">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p className="text-sm font-medium">{error}</p>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="bg-green-50 border border-green-100 p-4 rounded-2xl flex items-center space-x-3 text-green-700 animate-in fade-in zoom-in-95 duration-300">
+          <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+          <p className="text-sm font-medium">{successMessage}</p>
+        </div>
+      )}
+
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-50 flex items-center justify-between">
           <h3 className="font-bold text-lg flex items-center space-x-2">
             <Upload className="w-5 h-5 text-indigo-600" />
             <span>Upload Contact Sheet</span>
           </h3>
-          <button className="text-sm text-indigo-600 hover:underline font-medium flex items-center space-x-1">
+          <button
+            onClick={downloadTemplate}
+            className="text-sm text-indigo-600 hover:underline font-medium flex items-center space-x-1"
+          >
             <Download className="w-4 h-4" />
             <span>Download Template</span>
           </button>
@@ -84,7 +184,7 @@ const CompanyDistribution: React.FC = () => {
                 className="hidden"
                 ref={fileInputRef}
                 onChange={handleFileUpload}
-                accept=".csv,.xlsx"
+                accept=".csv,.xlsx,.xls"
               />
               <div className="bg-white w-20 h-20 rounded-full shadow-lg flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 {isProcessingCsv ? (
@@ -107,30 +207,20 @@ const CompanyDistribution: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-bold text-lg">{recipients.length} Recipients Validated</p>
-                    <p className="text-sm opacity-90">Ready for processing</p>
+                    <p className="text-sm opacity-90">
+                      {validationInfo && validationInfo.skipped > 0
+                        ? `${validationInfo.total} rows found, ${validationInfo.skipped} skipped due to invalid data.`
+                        : 'Ready for processing'}
+                    </p>
                   </div>
                 </div>
                 <button
-                  onClick={() => { setRecipients([]); setAiAnalysis(null); }}
+                  onClick={() => { setRecipients([]); setValidationInfo(null); setError(null); setSuccessMessage(null); }}
                   className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                 >
                   Clear List
                 </button>
               </div>
-
-              {aiAnalysis && (
-                <div className="bg-amber-50 border border-amber-100 p-5 rounded-2xl flex space-x-4">
-                  <div className="p-2 bg-white rounded-xl shadow-sm h-fit">
-                    <Zap className="w-6 h-6 text-amber-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-amber-900 mb-1 flex items-center">
-                      AI Smart Audit Report
-                    </p>
-                    <p className="text-sm text-amber-800 leading-relaxed whitespace-pre-wrap">{aiAnalysis}</p>
-                  </div>
-                </div>
-              )}
 
               <div className="overflow-hidden border border-gray-100 rounded-2xl shadow-sm">
                 <table className="w-full text-left text-sm">
@@ -157,10 +247,21 @@ const CompanyDistribution: React.FC = () => {
                 <div>
                   <p className="text-slate-400 text-xs uppercase font-bold tracking-widest">Grand Total Cost</p>
                   <p className="text-3xl font-bold">${totalToDistribute.toLocaleString()}</p>
+                  {!hasSufficientBalance && (
+                    <p className="text-red-400 text-xs mt-1 font-medium">Insufficient balance (Available: ${user.balance})</p>
+                  )}
                 </div>
-                <button className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-900/50 transition-all flex items-center space-x-2 transform hover:-translate-y-1">
-                  <Send className="w-5 h-5" />
-                  <span>Execute Bulk Airtime</span>
+                <button
+                  onClick={handleExecute}
+                  disabled={isExecuting || !hasSufficientBalance}
+                  className={`px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-900/50 transition-all flex items-center space-x-2 transform ${isExecuting || !hasSufficientBalance ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-1 active:scale-95'}`}
+                >
+                  {isExecuting ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <Send className="w-5 h-5" />
+                  )}
+                  <span>{isExecuting ? 'Processing...' : 'Execute Bulk Airtime'}</span>
                 </button>
               </div>
             </div>
@@ -172,4 +273,5 @@ const CompanyDistribution: React.FC = () => {
 };
 
 export default CompanyDistribution;
+
 

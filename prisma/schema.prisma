@@ -36,12 +36,22 @@ model User {
   password      String
   role          UserRole        @default(COMPANY)
   companyName   String?
-  balance       Float           @default(0)
   status        UserStatus      @default(ACTIVE)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  wallet        Wallet?
   transactions  Transaction[]
   systemLogs    SystemLog[]
+  subscriptions Subscription[]
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Transaction {
@@ -53,6 +63,7 @@ model Transaction {
   status          TransactionStatus @default(COMPLETED)
   recipientsCount Int               @default(0)
   recipients      Recipient[]
+  paymentMethod   String?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 }
@@ -74,8 +85,26 @@ model PromoCode {
   discountPercent Float
   expiryDate      DateTime
   isActive        Boolean  @default(true)
+  maxUsages       Int      @default(100)
+  currentUsages   Int      @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  subscriptions   Subscription[]
+}
+
+model Subscription {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  planName    String   // e.g., "Silver", "Gold", "Platinum"
+  amount      Float
+  status      String   @default("active")
+  promoCodeId String?
+  promoCode   PromoCode? @relation(fields: [promoCodeId], references: [id])
+  startDate   DateTime @default(now())
+  endDate     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model SystemLog {
