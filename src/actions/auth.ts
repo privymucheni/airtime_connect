@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { UserRole, UserStatus } from "@prisma/client";
+import { createLog } from "@/lib/logger";
 
 export async function registerCompany(formData: any) {
     try {
@@ -32,6 +33,12 @@ export async function registerCompany(formData: any) {
                     }
                 }
             },
+        });
+
+        await createLog({
+            type: 'AUTH',
+            message: `New company registered: ${companyName || name} (${email})`,
+            userId: user.id
         });
 
         return { success: true, user: { id: user.id, email: user.email } };

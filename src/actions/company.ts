@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { TransactionType, TransactionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { createLog } from "@/lib/logger";
 
 function generateTransactionRef() {
     const timestamp = new Date().getTime().toString().substring(1); // Remove first digit for length control
@@ -166,6 +167,12 @@ export async function distributeAirtime(data: { recipients: any[] }) {
         timeout: 30000,
     });
 
+    await createLog({
+        type: 'DISTRIBUTION',
+        message: `Distributed $${totalAmount} to ${data.recipients.length} recipients`,
+        userId
+    });
+
     revalidatePath("/company");
     revalidatePath("/company/history");
     return result;
@@ -208,6 +215,12 @@ export async function topUpWallet(amount: number, paymentMethod: string, promoCo
         });
 
         return { success: true, transactionId: transaction.id, creditedAmount: finalAmount };
+    });
+
+    await createLog({
+        type: 'WALLET',
+        message: `Wallet topped up with $${finalAmount} via ${paymentMethod}`,
+        userId
     });
 
     revalidatePath("/company");
