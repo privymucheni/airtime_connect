@@ -10,9 +10,12 @@ import {
   Users,
   Send,
   Activity,
+  History,
+  Eye,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import WalletModal from '@/components/WalletModal';
+import TransactionDetailModal from '@/components/TransactionDetailModal';
 import Link from 'next/link';
 import { getCompanyDashboardData } from '@/actions/company';
 
@@ -31,6 +34,8 @@ const CompanyDashboard: React.FC = () => {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -91,9 +96,9 @@ const CompanyDashboard: React.FC = () => {
             <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
               <CreditCard className="w-6 h-6 font-black" />
             </div>
-            <span className="text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg tracking-widest uppercase">Safe</span>
+            <span className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1.5 rounded-lg tracking-widest uppercase">Safe</span>
           </div>
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Available Balance</p>
+          <p className="text-sm text-gray-400 font-medium uppercase tracking-[0.2em]">Available Balance</p>
           <p className="text-4xl font-black text-gray-900 mt-1 font-mono tracking-tighter">${balance.toLocaleString()}</p>
         </div>
 
@@ -102,9 +107,9 @@ const CompanyDashboard: React.FC = () => {
             <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
               <Activity className="w-6 h-6 font-black" />
             </div>
-            <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-2 py-1 rounded-lg tracking-widest uppercase">30 Days</span>
+            <span className="text-xs font-medium text-gray-400 bg-gray-50 px-3 py-1.5 rounded-lg tracking-widest uppercase">30 Days</span>
           </div>
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Monthly Volume</p>
+          <p className="text-sm text-gray-400 font-medium uppercase tracking-[0.2em]">Monthly Volume</p>
           <p className="text-4xl font-black text-gray-900 mt-1 font-mono tracking-tighter">${metrics?.monthlyVolume.toLocaleString() || 0}</p>
         </div>
 
@@ -113,9 +118,9 @@ const CompanyDashboard: React.FC = () => {
             <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
               <ArrowDownLeft className="w-6 h-6 font-black" />
             </div>
-            <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg tracking-widest uppercase">All Time</span>
+            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg tracking-widest uppercase">All Time</span>
           </div>
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Total Reloads</p>
+          <p className="text-sm text-gray-400 font-medium uppercase tracking-[0.2em]">Total Reloads</p>
           <p className="text-4xl font-black text-gray-900 mt-1 font-mono tracking-tighter">${metrics?.totalReloads.toLocaleString() || 0}</p>
         </div>
 
@@ -125,7 +130,7 @@ const CompanyDashboard: React.FC = () => {
               <Users className="w-6 h-6 font-black" />
             </div>
           </div>
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Total Recipients</p>
+          <p className="text-sm text-gray-400 font-medium uppercase tracking-[0.2em]">Total Recipients</p>
           <p className="text-4xl font-black text-gray-900 mt-1 font-mono tracking-tighter">{metrics?.totalRecipients.toLocaleString() || 0}</p>
         </div>
       </div>
@@ -135,11 +140,11 @@ const CompanyDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-10">
             <div className="space-y-1">
               <h3 className="font-black text-2xl text-gray-900">Distribution Trends</h3>
-              <p className="text-sm text-gray-400 font-medium tracking-tight">Real-time distribution volume for the last 7 days.</p>
+              <p className="text-base text-gray-400 font-medium tracking-tight">Real-time distribution volume for the last 7 days.</p>
             </div>
             <div className="flex items-center space-x-3 px-5 py-2.5 bg-gray-50 rounded-2xl">
               <span className="w-3 h-3 bg-indigo-600 rounded-full animate-pulse"></span>
-              <span className="text-sm font-black text-gray-600 uppercase tracking-widest">Live Data</span>
+              <span className="text-sm font-medium text-gray-600 uppercase tracking-widest">Live Data</span>
             </div>
           </div>
           <div className="h-[450px]">
@@ -153,8 +158,8 @@ const CompanyDashboard: React.FC = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 13, fontWeight: 700 }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 13, fontWeight: 700 }} dx={-10} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 14, fontWeight: 700 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 14, fontWeight: 700 }} dx={-10} />
                   <Tooltip
                     contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', padding: '16px' }}
                     formatter={(value: any) => [`$${value.toLocaleString()}`, 'Amount']}
@@ -171,7 +176,7 @@ const CompanyDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm p-10">
+        <div className="w-full bg-white rounded-[3rem] border border-gray-100 shadow-sm p-10">
           <div className="flex items-center justify-between mb-8">
             <h3 className="font-black text-2xl text-gray-900">Quick History</h3>
             <Link href="/company/history" className="text-indigo-600 text-sm font-black uppercase tracking-widest hover:text-indigo-700 transition-colors">View All</Link>
@@ -183,17 +188,29 @@ const CompanyDashboard: React.FC = () => {
                 <p className="text-base font-black uppercase tracking-widest">No recent activity</p>
               </div>
             ) : transactions.map((tx: any) => (
-              <div key={tx.id} className="flex items-center space-x-5 p-5 hover:bg-gray-50 rounded-[2rem] transition-all cursor-pointer group border border-transparent hover:border-gray-100">
-                <div className={`p-4 rounded-2xl group-hover:scale-110 transition-transform ${tx.type === 'CREDIT' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                  {tx.type === 'CREDIT' ? <ArrowDownLeft className="w-6 h-6" /> : <ArrowUpRight className="w-6 h-6" />}
+              <div
+                key={tx.id}
+                onClick={() => {
+                  setSelectedTransaction(tx);
+                  setIsDetailModalOpen(true);
+                }}
+                className="flex items-center space-x-6 p-6 hover:bg-gray-50 rounded-[2.5rem] transition-all cursor-pointer group border border-transparent hover:border-gray-100"
+              >
+                <div className={`p-5 rounded-2xl group-hover:scale-110 transition-transform ${tx.type === 'CREDIT' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                  {tx.type === 'CREDIT' ? <ArrowDownLeft className="w-7 h-7" /> : <ArrowUpRight className="w-7 h-7" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-base font-black text-gray-900 truncate">
-                    {tx.type === 'CREDIT' ? 'Wallet Reload' : `Bulk Distribution`}
-                  </p>
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">{new Date(tx.createdAt).toLocaleDateString()}</p>
+                  <div className="flex items-center space-x-3">
+                    <p className="text-xl font-black text-gray-900 truncate">
+                      {tx.type === 'CREDIT' ? 'Wallet Reload' : `Bulk Distribution`}
+                    </p>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Eye className="w-5 h-5 text-indigo-600" />
+                    </div>
+                  </div>
+                  <p className="text-base text-gray-400 font-medium uppercase tracking-widest mt-0.5">{new Date(tx.createdAt).toLocaleDateString()}</p>
                 </div>
-                <div className={`text-right ${tx.type === 'CREDIT' ? 'text-green-600' : 'text-gray-900'} font-black text-lg font-mono`}>
+                <div className={`text-right ${tx.type === 'CREDIT' ? 'text-green-600' : 'text-gray-900'} font-black text-2xl font-mono tracking-tighter`}>
                   {tx.type === 'CREDIT' ? '+' : '-'}${tx.amount.toLocaleString()}
                 </div>
               </div>
@@ -206,6 +223,12 @@ const CompanyDashboard: React.FC = () => {
         isOpen={isWalletModalOpen}
         onClose={() => setIsWalletModalOpen(false)}
         currentBalance={balance}
+      />
+
+      <TransactionDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        transaction={selectedTransaction}
       />
     </div>
   );

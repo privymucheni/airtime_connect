@@ -48,12 +48,12 @@ const CompanyDistribution: React.FC = () => {
         const availableKeys = Object.keys(firstRow);
         const keysLower = availableKeys.map(k => k.toLowerCase());
 
-        const phoneKeyActual = availableKeys.find((_, i) => keysLower[i].includes('phone') || keysLower[i].includes('number'));
+        const phoneKeyActual = availableKeys.find((_, i) => keysLower[i].includes('phone') || keysLower[i].includes('number') || keysLower[i].includes('msisdn'));
         const amountKeyActual = availableKeys.find((_, i) => keysLower[i].includes('amount') || keysLower[i].includes('credit') || keysLower[i].includes('value'));
         const nameKeyActual = availableKeys.find((_, i) => keysLower[i].includes('name') || keysLower[i].includes('employee') || keysLower[i].includes('user'));
 
         if (!phoneKeyActual || !amountKeyActual) {
-          throw new Error("File must contain columns for 'Phone Number' and 'Amount'.");
+          throw new Error("File must contain columns for 'Phone Number' (or 'MSISDN') and 'Amount'.");
         }
 
         let skippedCount = 0;
@@ -140,35 +140,35 @@ const CompanyDistribution: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Bulk Distribution</h2>
-        <p className="text-gray-500">Upload your spreadsheet to credit multiple numbers instantly.</p>
+        <h2 className="text-4xl font-black text-gray-900 tracking-tighter">Bulk <span className="text-indigo-600">Distribution</span></h2>
+        <p className="text-xl text-gray-500 font-medium">Upload your spreadsheet to credit multiple numbers instantly.</p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center space-x-3 text-red-700 animate-in fade-in zoom-in-95 duration-300">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm font-medium">{error}</p>
+        <div className="bg-red-50 border border-red-100 p-6 rounded-2xl flex items-center space-x-4 text-red-700 animate-in fade-in zoom-in-95 duration-300">
+          <AlertCircle className="w-6 h-6 flex-shrink-0" />
+          <p className="text-lg font-medium">{error}</p>
         </div>
       )}
 
       {successMessage && (
-        <div className="bg-green-50 border border-green-100 p-4 rounded-2xl flex items-center space-x-3 text-green-700 animate-in fade-in zoom-in-95 duration-300">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm font-medium">{successMessage}</p>
+        <div className="bg-green-50 border border-green-100 p-6 rounded-2xl flex items-center space-x-4 text-green-700 animate-in fade-in zoom-in-95 duration-300">
+          <CheckCircle2 className="w-6 h-6 flex-shrink-0" />
+          <p className="text-lg font-medium">{successMessage}</p>
         </div>
       )}
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-          <h3 className="font-bold text-lg flex items-center space-x-2">
-            <Upload className="w-5 h-5 text-indigo-600" />
+        <div className="p-8 border-b border-gray-50 flex items-center justify-between">
+          <h3 className="font-black text-2xl flex items-center space-x-3 text-gray-900">
+            <Upload className="w-7 h-7 text-indigo-600" />
             <span>Upload Contact Sheet</span>
           </h3>
           <button
             onClick={downloadTemplate}
-            className="text-sm text-indigo-600 hover:underline font-medium flex items-center space-x-1"
+            className="text-lg text-indigo-600 hover:text-indigo-700 font-bold flex items-center space-x-2 transition-colors"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-5 h-5" />
             <span>Download Template</span>
           </button>
         </div>
@@ -193,9 +193,9 @@ const CompanyDistribution: React.FC = () => {
                   <FileText className="w-10 h-10 text-indigo-600" />
                 )}
               </div>
-              <h4 className="text-xl font-bold text-gray-900">Click to upload or drag & drop</h4>
-              <p className="text-gray-500 max-w-sm mx-auto mt-2">
-                Supported formats: CSV, XLS, XLSX. Ensure your file contains 'Phone' and 'Amount' columns.
+              <h4 className="text-2xl font-black text-gray-900">Click to upload or drag & drop</h4>
+              <p className="text-xl text-gray-400 font-medium max-w-lg mx-auto mt-4">
+                Supported formats: CSV, XLS, XLSX. Ensure your file contains 'Phone Number' (or MSISDN) and 'Amount' columns.
               </p>
             </div>
           ) : (
@@ -206,8 +206,8 @@ const CompanyDistribution: React.FC = () => {
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-bold text-lg">{recipients.length} Recipients Validated</p>
-                    <p className="text-sm opacity-90">
+                    <p className="font-black text-xl text-indigo-900">{recipients.length} Recipients Validated</p>
+                    <p className="text-lg font-medium text-indigo-600/80">
                       {validationInfo && validationInfo.skipped > 0
                         ? `${validationInfo.total} rows found, ${validationInfo.skipped} skipped due to invalid data.`
                         : 'Ready for processing'}
@@ -216,27 +216,27 @@ const CompanyDistribution: React.FC = () => {
                 </div>
                 <button
                   onClick={() => { setRecipients([]); setValidationInfo(null); setError(null); setSuccessMessage(null); }}
-                  className="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                  className="px-6 py-3 text-lg font-bold text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all"
                 >
                   Clear List
                 </button>
               </div>
 
               <div className="overflow-hidden border border-gray-100 rounded-2xl shadow-sm">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-100">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50/50 border-b border-gray-100">
                     <tr>
-                      <th className="px-6 py-4 font-bold text-gray-600">Employee Name</th>
-                      <th className="px-6 py-4 font-bold text-gray-600">Phone Number</th>
-                      <th className="px-6 py-4 font-bold text-gray-600 text-right">Credit Amount</th>
+                      <th className="px-8 py-6 text-lg font-medium text-gray-400 uppercase tracking-widest">Employee Name</th>
+                      <th className="px-8 py-6 text-lg font-medium text-gray-400 uppercase tracking-widest">Phone Number</th>
+                      <th className="px-8 py-6 text-lg font-medium text-gray-400 uppercase tracking-widest text-right">Credit Amount</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {recipients.map((r, i) => (
-                      <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-gray-900">{r.name}</td>
-                        <td className="px-6 py-4 text-gray-500">{r.phoneNumber}</td>
-                        <td className="px-6 py-4 text-right font-bold text-indigo-600">${r.amount}</td>
+                      <tr key={i} className="hover:bg-gray-50/30 transition-colors">
+                        <td className="px-8 py-6 text-xl font-bold text-gray-900">{r.name}</td>
+                        <td className="px-8 py-6 text-xl text-gray-500 font-medium">{r.phoneNumber}</td>
+                        <td className="px-8 py-6 text-right font-black text-indigo-600 text-2xl font-mono tracking-tighter">${r.amount.toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -245,23 +245,23 @@ const CompanyDistribution: React.FC = () => {
 
               <div className="bg-slate-900 p-6 rounded-2xl flex items-center justify-between text-white">
                 <div>
-                  <p className="text-slate-400 text-xs uppercase font-bold tracking-widest">Grand Total Cost</p>
-                  <p className="text-3xl font-bold">${totalToDistribute.toLocaleString()}</p>
+                  <p className="text-slate-400 text-sm uppercase font-medium tracking-[0.2em] mb-1">Grand Total Cost</p>
+                  <p className="text-5xl font-black font-mono tracking-tighter text-white">${totalToDistribute.toLocaleString()}</p>
                   {!hasSufficientBalance && (
-                    <p className="text-red-400 text-xs mt-1 font-medium">Insufficient balance (Available: ${user.balance})</p>
+                    <p className="text-red-400 text-lg mt-2 font-medium bg-red-400/10 px-4 py-2 rounded-xl inline-block">Insufficient balance (Available: ${user.balance.toLocaleString()})</p>
                   )}
                 </div>
                 <button
                   onClick={handleExecute}
                   disabled={isExecuting || !hasSufficientBalance}
-                  className={`px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-900/50 transition-all flex items-center space-x-2 transform ${isExecuting || !hasSufficientBalance ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-1 active:scale-95'}`}
+                  className={`px-10 py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xl rounded-2xl shadow-xl shadow-indigo-900/40 transition-all flex items-center space-x-3 transform ${isExecuting || !hasSufficientBalance ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-1 active:scale-95'}`}
                 >
                   {isExecuting ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
                   ) : (
-                    <Send className="w-5 h-5" />
+                    <Send className="w-6 h-6" />
                   )}
-                  <span>{isExecuting ? 'Processing...' : 'Execute Bulk Airtime'}</span>
+                  <span>{isExecuting ? 'Processing...' : 'Execute Distribution'}</span>
                 </button>
               </div>
             </div>

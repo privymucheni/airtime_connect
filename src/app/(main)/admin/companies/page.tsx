@@ -1,118 +1,299 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Search, Filter, CheckCircle2, XCircle, MoreVertical, Download, Plus } from 'lucide-react';
-
-const MOCK_COMPANIES = [
-  { id: '1', name: 'Acme Corporation', email: 'finance@acme.com', balance: 45000, status: 'active', joined: '2023-12-10' },
-  { id: '2', name: 'Global Tech Hub', email: 'billing@globaltech.io', balance: 12000, status: 'active', joined: '2024-01-15' },
-  { id: '3', name: 'Sunrise Logistics', email: 'ops@sunrise.com', balance: 0, status: 'pending', joined: '2024-03-01' },
-  { id: '4', name: 'Blue Sky Media', email: 'accounts@bluesky.com', balance: 8500, status: 'active', joined: '2023-11-20' },
-  { id: '5', name: 'Terra Nova Energy', email: 'pay@terranova.net', balance: 3400, status: 'suspended', joined: '2023-09-05' },
-];
+import React, { useState, useEffect } from 'react';
+import {
+  Search,
+  Filter,
+  CheckCircle2,
+  XCircle,
+  MoreVertical,
+  Download,
+  Plus,
+  RefreshCcw,
+  FileSpreadsheet,
+  FileText,
+  ChevronDown
+} from 'lucide-react';
+import { getAllCompanies, updateUserStatus } from '@/actions/admin';
+import { UserStatus } from '@prisma/client';
+import AddCompanyModal from '@/components/AddCompanyModal';
+import CompanyDetailsSheet from '@/components/CompanyDetailsSheet';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const AdminCompanies: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
 
-  const filtered = MOCK_COMPANIES.filter(c =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const fetchCompanies = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getAllCompanies();
+      setCompanies(data);
+    } catch (error) {
+      console.error("Failed to fetch companies:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const handleStatusUpdate = async (userId: string, status: UserStatus) => {
+    try {
+      await updateUserStatus(userId, status);
+      fetchCompanies(); // Refresh list
+      if (selectedCompany?.id === userId) {
+        setSelectedCompany({ ...selectedCompany, status });
+      }
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    }
+  };
+
+  const exportToCSV = () => {
+    const data = companies.map(c => ({
+      'Company Name': c.companyName || c.name,
+      'Email': c.email,
+      'Balance': c.wallet?.balance || 0,
+      'Status': c.status,
+      'Joined Date': new Date(c.createdAt).toLocaleDateString()
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Companies");
+    XLSX.writeFile(wb, "AirTimeConnect_Companies.xlsx");
+    setIsExportDropdownOpen(false);
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("AirTimeConnect - Registered Companies", 14, 15);
+
+    const tableColumn = ["Company", "Email", "Balance", "Status", "Joined"];
+    const tableRows = companies.map(c => [
+      c.companyName || c.name,
+      c.email,
+      `$${(c.wallet?.balance || 0).toLocaleString()}`,
+      c.status,
+      new Date(c.createdAt).toLocaleDateString()
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+      theme: 'grid',
+      headStyles: { fillColor: [99, 102, 241] } // Indigo color in RGB
+    });
+
+    doc.save("AirTimeConnect_Companies.pdf");
+    setIsExportDropdownOpen(false);
+  };
+
+  const filtered = companies.filter(c =>
+    (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.companyName && c.companyName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Registered Companies</h2>
-          <p className="text-gray-500 text-sm">Review, approve, and manage company accounts.</p>
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Registered Companies</h2>
+          <p className="text-gray-500 text-sm font-medium">Review, approve, and manage company accounts.</p>
         </div>
         <div className="flex items-center space-x-3">
-          <button className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-medium">
-            <Download className="w-4 h-4" />
-            <span>Export List</span>
+          <button
+            onClick={fetchCompanies}
+            className="p-2.5 bg-white border border-gray-100 text-gray-500 rounded-2xl hover:bg-gray-50 hover:text-indigo-600 transition-all shadow-sm"
+            title="Refresh Table"
+          >
+            <RefreshCcw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
-          <button className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-100">
-            <Plus className="w-4 h-4" />
-            <span>Add New Company</span>
+
+          <div className="relative">
+            <button
+              onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+              className="flex items-center space-x-2 px-5 py-2.5 bg-white border border-gray-100 text-gray-700 rounded-2xl hover:bg-gray-50 font-black text-sm shadow-sm transition-all"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export Data</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${isExportDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isExportDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-gray-50 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <button
+                  onClick={exportToCSV}
+                  className="w-full flex items-center space-x-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>Excel / CSV</span>
+                </button>
+                <button
+                  onClick={exportToPDF}
+                  className="w-full flex items-center space-x-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>PDF Document</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center space-x-2 px-6 py-2.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 font-black text-sm shadow-xl shadow-indigo-100 transition-all transform hover:-translate-y-0.5 active:scale-95"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Add Company</span>
           </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-50 flex items-center space-x-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden min-h-[500px]">
+        <div className="p-8 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-lg">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 font-black" />
             <input
               type="text"
-              placeholder="Search by company name or email..."
+              placeholder="Search companies by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-transparent focus:border-indigo-500 rounded-xl outline-none transition-all"
+              className="w-full pl-12 pr-6 py-3.5 bg-gray-50 border border-transparent focus:border-indigo-500 rounded-[1.5rem] outline-none transition-all font-medium text-sm"
             />
           </div>
-          <button className="p-2.5 bg-gray-50 hover:bg-gray-100 rounded-xl text-gray-500">
-            <Filter className="w-5 h-5" />
+          <button className="flex items-center space-x-2 px-5 py-3.5 bg-gray-50 hover:bg-gray-100 rounded-[1.5rem] text-gray-500 font-bold text-sm transition-all border border-transparent hover:border-gray-200">
+            <Filter className="w-4 h-4" />
+            <span>Advanced Filters</span>
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Company</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Balance</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Joined Date</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filtered.map((company) => (
-                <tr key={company.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold">
-                        {company.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">{company.name}</p>
-                        <p className="text-xs text-gray-500">{company.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-bold text-gray-900">${company.balance.toLocaleString()}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-bold ${company.status === 'active' ? 'bg-green-100 text-green-700' :
-                        company.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                          'bg-red-100 text-red-700'
-                      }`}>
-                      {company.status.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{company.joined}</td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button className="p-2 text-green-600 hover:bg-green-50 rounded-lg">
-                        <CheckCircle2 className="w-5 h-5" />
-                      </button>
-                      <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
-                        <XCircle className="w-5 h-5" />
-                      </button>
-                      <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg">
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-32">
+            <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-6"></div>
+            <p className="text-gray-400 font-black uppercase tracking-widest text-xs">Synchronizing Database...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-32 text-center px-4">
+            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+              <Search className="w-10 h-10 text-gray-200" />
+            </div>
+            <h3 className="text-xl font-black text-gray-900">No companies matched</h3>
+            <p className="text-gray-400 mt-2 max-w-xs mx-auto text-sm font-medium">Try adjusting your filters or search term to find what you're looking for.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50/50 border-b border-gray-50">
+                <tr>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Company Profile</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Current Balance</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Compliance Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Registered On</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filtered.map((company) => (
+                  <tr
+                    key={company.id}
+                    className="hover:bg-indigo-50/30 transition-all group cursor-pointer"
+                    onClick={() => {
+                      setSelectedCompany(company);
+                      setIsSheetOpen(true);
+                    }}
+                  >
+                    <td className="px-8 py-5">
+                      <div className="flex items-center space-x-5">
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-indigo-700 font-black text-lg shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                          {(company.companyName || company.name).charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-gray-900 group-hover:text-indigo-600 transition-colors">{company.companyName || company.name}</p>
+                          <p className="text-xs text-gray-400 font-medium">{company.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-black text-gray-900">${(company.wallet?.balance || 0).toLocaleString()}</span>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">USD Wallet</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${company.status === UserStatus.ACTIVE ? 'bg-green-100 text-green-700' :
+                        company.status === UserStatus.PENDING ? 'bg-amber-100 text-amber-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                        {company.status}
+                      </span>
+                    </td>
+                    <td className="px-8 py-5">
+                      <p className="text-sm font-bold text-gray-500">
+                        {new Date(company.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    </td>
+                    <td className="px-8 py-5 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end space-x-2">
+                        {company.status !== UserStatus.ACTIVE && (
+                          <button
+                            onClick={() => handleStatusUpdate(company.id, UserStatus.ACTIVE)}
+                            className="p-2.5 text-green-600 hover:bg-green-100 rounded-xl transition-all"
+                            title="Activate Account"
+                          >
+                            <CheckCircle2 className="w-5 h-5" />
+                          </button>
+                        )}
+                        {company.status !== UserStatus.SUSPENDED && (
+                          <button
+                            onClick={() => handleStatusUpdate(company.id, UserStatus.SUSPENDED)}
+                            className="p-2.5 text-red-600 hover:bg-red-100 rounded-xl transition-all"
+                            title="Suspend Account"
+                          >
+                            <XCircle className="w-5 h-5" />
+                          </button>
+                        )}
+                        <button className="p-2.5 text-gray-400 hover:bg-gray-100 rounded-xl">
+                          <MoreVertical className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      <AddCompanyModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchCompanies}
+      />
+
+      <CompanyDetailsSheet
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        company={selectedCompany}
+        onStatusUpdate={handleStatusUpdate}
+      />
     </div>
   );
 };
 
 export default AdminCompanies;
+
+

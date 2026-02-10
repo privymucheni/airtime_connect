@@ -26,7 +26,11 @@ export async function registerCompany(formData: any) {
                 companyName,
                 role: UserRole.COMPANY,
                 status: UserStatus.ACTIVE,
-                balance: 0,
+                wallet: {
+                    create: {
+                        balance: 0
+                    }
+                }
             },
         });
 
@@ -50,13 +54,48 @@ export async function createUser(data: any) {
                 password: hashedPassword,
                 role,
                 companyName,
-                balance: 0,
                 status: UserStatus.ACTIVE,
+                wallet: {
+                    create: {
+                        balance: 0
+                    }
+                }
             },
         });
 
         return { success: true, user };
     } catch (error: any) {
         return { error: error.message };
+    }
+}
+
+export async function registerAdmin(formData: any) {
+    try {
+        const { name, email, password } = formData;
+
+        const existingUser = await prisma.user.findUnique({
+            where: { email },
+        });
+
+        if (existingUser) {
+            return { error: "User with this email already exists" };
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = await prisma.user.create({
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                role: UserRole.ADMIN,
+                status: UserStatus.ACTIVE,
+            },
+        });
+
+        return { success: true, user: { id: user.id, email: user.email } };
+    } catch (error: any) {
+        console.error("Admin registration error:", error);
+        return { error: error.message || "An error occurred during registration" };
     }
 }

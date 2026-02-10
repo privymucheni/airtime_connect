@@ -38,6 +38,10 @@ export const authOptions: NextAuthOptions = {
                     user.password
                 );
 
+                if (user.status === "SUSPENDED") {
+                    throw new Error("Your account has been suspended. Please contact support.");
+                }
+
                 if (!isPasswordValid) {
                     throw new Error("Invalid password");
                 }

@@ -6,6 +6,12 @@ import { authOptions } from "@/lib/auth";
 import { TransactionType, TransactionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+function generateTransactionRef() {
+    const timestamp = new Date().getTime().toString().substring(1); // Remove first digit for length control
+    const random = Math.floor(100 + Math.random() * 900).toString();
+    return `T${timestamp}${random}`;
+}
+
 export async function getCompanyDashboardData() {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== "COMPANY") {
@@ -21,6 +27,7 @@ export async function getCompanyDashboardData() {
             transactions: {
                 orderBy: { createdAt: "desc" },
                 take: 10,
+                include: { recipients: true },
             },
         },
     });
@@ -114,7 +121,7 @@ export async function distributeAirtime(data: { recipients: any[] }) {
     const userId = (session.user as any).id;
     const totalAmount = data.recipients.reduce((sum, r) => sum + r.amount, 0);
 
-    return await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
         const wallet = await tx.wallet.findUnique({
             where: { userId },
         });
@@ -129,30 +136,39 @@ export async function distributeAirtime(data: { recipients: any[] }) {
             data: { balance: { decrement: totalAmount } },
         });
 
-        // Create transaction
+        // Create transaction first
         const transaction = await tx.transaction.create({
             data: {
+                id: generateTransactionRef(),
                 userId,
                 amount: totalAmount,
                 type: TransactionType.DEBIT,
                 status: TransactionStatus.COMPLETED,
                 recipientsCount: data.recipients.length,
                 paymentMethod: "Wallet Balance",
-                recipients: {
-                    create: data.recipients.map((r) => ({
-                        name: r.name,
-                        phoneNumber: r.phoneNumber,
-                        amount: r.amount,
-                        status: "success",
-                    })),
-                },
             },
         });
 
-        revalidatePath("/company");
-        revalidatePath("/company/history");
+        // Use createMany for mass recipients (much faster than nested create)
+        await tx.recipient.createMany({
+            data: data.recipients.map((r) => ({
+                transactionId: transaction.id,
+                name: r.name,
+                phoneNumber: r.phoneNumber,
+                amount: r.amount,
+                status: "success",
+            })),
+        });
+
         return { success: true, transactionId: transaction.id };
+    }, {
+        maxWait: 10000,
+        timeout: 30000,
     });
+
+    revalidatePath("/company");
+    revalidatePath("/company/history");
+    return result;
 }
 
 export async function topUpWallet(amount: number, paymentMethod: string, promoCodeId?: string) {
@@ -171,9 +187,10 @@ export async function topUpWallet(amount: number, paymentMethod: string, promoCo
         }
     }
 
-    return await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
         const transaction = await tx.transaction.create({
             data: {
+                id: generateTransactionRef(),
                 userId,
                 amount: finalAmount,
                 type: TransactionType.CREDIT,
@@ -190,10 +207,12 @@ export async function topUpWallet(amount: number, paymentMethod: string, promoCo
             create: { userId, balance: finalAmount },
         });
 
-        revalidatePath("/company");
-        revalidatePath("/company/history");
         return { success: true, transactionId: transaction.id, creditedAmount: finalAmount };
     });
+
+    revalidatePath("/company");
+    revalidatePath("/company/history");
+    return result;
 }
 
 export async function validatePromoCode(code: string) {

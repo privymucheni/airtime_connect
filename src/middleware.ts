@@ -5,7 +5,10 @@ export default withAuth(
     function middleware(req) {
         const token = req.nextauth.token;
         const isAuth = !!token;
-        const isAuthPage = req.nextUrl.pathname.startsWith("/login") || req.nextUrl.pathname.startsWith("/register");
+        const isAuthPage =
+            req.nextUrl.pathname.startsWith("/login") ||
+            req.nextUrl.pathname.startsWith("/register") ||
+            req.nextUrl.pathname.startsWith("/register-admin");
 
         if (isAuthPage) {
             if (isAuth) {
@@ -32,7 +35,10 @@ export default withAuth(
     {
         callbacks: {
             authorized: ({ token, req }) => {
-                const isAuthPage = req.nextUrl.pathname.startsWith("/login") || req.nextUrl.pathname.startsWith("/register");
+                const isAuthPage =
+                    req.nextUrl.pathname.startsWith("/login") ||
+                    req.nextUrl.pathname.startsWith("/register") ||
+                    req.nextUrl.pathname.startsWith("/register-admin");
                 if (isAuthPage) return true;
                 return !!token;
             },
@@ -41,5 +47,5 @@ export default withAuth(
 );
 
 export const config = {
-    matcher: ["/admin/:path*", "/company/:path*", "/login", "/register"],
+    matcher: ["/admin/:path*", "/company/:path*", "/login", "/register", "/register-admin"],
 };

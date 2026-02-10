@@ -12,9 +12,11 @@ import {
     Filter,
     Download,
     Calendar,
-    Hash
+    Hash,
+    Eye
 } from 'lucide-react';
 import { useAuth } from '@/components/AuthContext';
+import TransactionDetailModal from '@/components/TransactionDetailModal';
 
 const TransactionHistoryPage = () => {
     const { user } = useAuth();
@@ -25,6 +27,8 @@ const TransactionHistoryPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('ALL');
     const [isExporting, setIsExporting] = useState(false);
+    const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const pageSize = 12;
 
     const fetchTransactions = useCallback(async () => {
@@ -95,7 +99,7 @@ const TransactionHistoryPage = () => {
             {/* Header Section */}
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
                 <div className="space-y-4">
-                    <h1 className="text-7xl font-black text-gray-900 leading-[1.1] tracking-tighter">Transaction <span className="text-indigo-600">History</span></h1>
+                    <h1 className="text-5xl font-black text-gray-900 leading-[1.1] tracking-tighter">Transaction <span className="text-indigo-600">History</span></h1>
                     <p className="text-2xl text-gray-500 font-medium max-w-3xl">Analyze and audit your complete financial activity. Track every distribution and top-up with ultra-precision.</p>
                 </div>
                 <div className="flex items-center space-x-4">
@@ -144,11 +148,11 @@ const TransactionHistoryPage = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50/80 border-b-2 border-gray-100">
-                                <th className="px-12 py-10 text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Transaction & Timing</th>
-                                <th className="px-12 py-10 text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Details & Reference</th>
-                                <th className="px-12 py-10 text-sm font-black text-gray-400 uppercase tracking-[0.2em] text-center">Batch Size</th>
-                                <th className="px-12 py-10 text-sm font-black text-gray-400 uppercase tracking-[0.2em] text-center">Execution Status</th>
-                                <th className="px-12 py-10 text-sm font-black text-gray-400 uppercase tracking-[0.2em] text-right">Value</th>
+                                <th className="w-[35%] px-8 py-10 text-[22px] font-medium text-gray-400 uppercase tracking-widest">Transaction & Timing</th>
+                                <th className="w-[30%] px-8 py-10 text-[22px] font-medium text-gray-400 uppercase tracking-widest">Details & Reference</th>
+                                <th className="w-[12.5%] px-8 py-10 text-[22px] font-medium text-gray-400 uppercase tracking-widest text-center">Batch Size</th>
+                                <th className="w-[12.5%] px-8 py-10 text-[22px] font-medium text-gray-400 uppercase tracking-widest text-center">Status</th>
+                                <th className="w-[10%] px-8 py-10 text-[22px] font-medium text-gray-400 uppercase tracking-widest text-right">Value</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -174,51 +178,60 @@ const TransactionHistoryPage = () => {
                                 </tr>
                             ) : (
                                 transactions.map((tx) => (
-                                    <tr key={tx.id} className="hover:bg-indigo-50/30 transition-all group">
-                                        <td className="px-12 py-10">
-                                            <div className="flex items-center space-x-8">
-                                                <div className={`p-6 rounded-[2rem] shadow-lg transition-transform group-hover:scale-110 ${tx.type === 'CREDIT' ? 'bg-emerald-50 text-emerald-600 shadow-emerald-100/50' : 'bg-rose-50 text-rose-600 shadow-rose-100/50'}`}>
-                                                    {tx.type === 'CREDIT' ? <ArrowDownLeft className="w-8 h-8 stroke-[3px]" /> : <ArrowUpRight className="w-8 h-8 stroke-[3px]" />}
+                                    <tr
+                                        key={tx.id}
+                                        onClick={() => {
+                                            setSelectedTransaction(tx);
+                                            setIsDetailModalOpen(true);
+                                        }}
+                                        className="hover:bg-indigo-50/30 transition-all group cursor-pointer"
+                                    >
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center space-x-6">
+                                                <div className={`p-4 rounded-2xl transition-transform group-hover:scale-110 flex-shrink-0 ${tx.type === 'CREDIT' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                                    {tx.type === 'CREDIT' ? <ArrowDownLeft className="w-6 h-6 stroke-[3px]" /> : <ArrowUpRight className="w-6 h-6 stroke-[3px]" />}
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <p className="font-black text-gray-900 text-2xl leading-none">{tx.type === 'CREDIT' ? 'Wallet Top-up' : 'Bulk Distribution'}</p>
-                                                    <div className="flex items-center text-gray-400 font-bold uppercase tracking-widest text-sm space-x-2">
-                                                        <Calendar className="w-4 h-4" />
-                                                        <span>{new Date(tx.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</span>
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center space-x-3 mb-1">
+                                                        <p className="font-black text-gray-900 text-[22px] leading-none truncate">{tx.type === 'CREDIT' ? 'Wallet Top-up' : 'Bulk Distribution'}</p>
+                                                        <Eye className="w-5 h-5 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     </div>
+                                                    <p className="text-gray-400 font-medium uppercase tracking-wider text-lg flex items-center">
+                                                        <Calendar className="w-4 h-4 mr-2" />
+                                                        {new Date(tx.createdAt).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-12 py-10">
-                                            <div className="space-y-2">
-                                                <div className="flex items-center space-x-2">
-                                                    <span className="text-base font-black text-gray-400 uppercase tracking-widest">Method:</span>
-                                                    <span className="text-xl font-black text-gray-900 capitalize underline decoration-indigo-200 underline-offset-4">{tx.paymentMethod || 'Wallet Balance'}</span>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <Hash className="w-3.5 h-3.5 text-gray-300" />
-                                                    <p className="text-xs font-mono text-gray-400 font-bold uppercase tracking-[0.2em]">{tx.id.toUpperCase()}</p>
-                                                </div>
+                                        <td className="px-8 py-6">
+                                            <div className="space-y-1.5">
+                                                <p className="text-[22px] font-black text-gray-800 leading-none capitalize">
+                                                    {tx.paymentMethod || 'Wallet Balance'}
+                                                </p>
+                                                <p className="text-lg font-mono text-gray-400 font-medium uppercase tracking-tight">
+                                                    {tx.id}
+                                                </p>
                                             </div>
                                         </td>
-                                        <td className="px-12 py-10 text-center">
+                                        <td className="px-8 py-6 text-center">
                                             {tx.recipientsCount > 0 ? (
-                                                <div className="inline-flex flex-col items-center">
-                                                    <span className="px-8 py-3 bg-indigo-50 text-indigo-700 rounded-2xl font-black text-lg shadow-sm border border-indigo-100">{tx.recipientsCount} recipients</span>
-                                                </div>
+                                                <span className="inline-flex items-center px-6 py-2 bg-indigo-50 text-indigo-600 rounded-full font-black text-lg uppercase tracking-widest border border-indigo-100/50 whitespace-nowrap">
+                                                    {tx.recipientsCount} recipients
+                                                </span>
                                             ) : (
-                                                <span className="text-gray-200 font-black text-xl">—</span>
+                                                <span className="text-gray-300 font-black text-lg">—</span>
                                             )}
                                         </td>
-                                        <td className="px-12 py-10 text-center">
-                                            <span className={`px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-sm border ${tx.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                tx.status === 'FAILED' ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-amber-50 text-amber-700 border-amber-100'
-                                                }`}>
+                                        <td className="px-8 py-6 text-center">
+                                            <span className={`inline-flex items-center px-6 py-2 rounded-full font-black text-lg uppercase tracking-widest border ${tx.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' :
+                                                tx.status === 'FAILED' ? 'bg-rose-50 text-rose-600 border-rose-100/50' : 'bg-amber-50 text-amber-700 border-amber-100/50'
+                                                } whitespace-nowrap`}>
+                                                <div className={`w-2 h-2 rounded-full mr-3 ${tx.status === 'COMPLETED' ? 'bg-emerald-500' : tx.status === 'FAILED' ? 'bg-rose-500' : 'bg-amber-500'}`} />
                                                 {tx.status}
                                             </span>
                                         </td>
-                                        <td className="px-12 py-10 text-right">
-                                            <div className={`text-4xl font-black font-mono tracking-tighter ${tx.type === 'CREDIT' ? 'text-emerald-600' : 'text-gray-900'}`}>
+                                        <td className="px-8 py-6 text-right">
+                                            <div className={`text-2xl font-black font-mono tracking-tighter ${tx.type === 'CREDIT' ? 'text-emerald-600' : 'text-gray-900'}`}>
                                                 {tx.type === 'CREDIT' ? '+' : '-'}${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                             </div>
                                         </td>
@@ -260,7 +273,13 @@ const TransactionHistoryPage = () => {
                     </div>
                 )}
             </div>
-        </div>
+
+            <TransactionDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                transaction={selectedTransaction}
+            />
+        </div >
     );
 };
 
