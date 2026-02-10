@@ -21,6 +21,11 @@ import { getAdminDashboardData, updateUserStatus } from '@/actions/admin';
 import { UserStatus } from '@prisma/client';
 import Link from 'next/link';
 
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { ChevronDown, FileText, FileSpreadsheet } from 'lucide-react';
+
 const MOCK_REVENUE = [
   { name: 'Jan', rev: 45000, users: 120 },
   { name: 'Feb', rev: 52000, users: 145 },
@@ -35,6 +40,7 @@ const AdminDashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -52,6 +58,98 @@ const AdminDashboard: React.FC = () => {
     fetchData();
   }, []);
 
+  const exportToExcel = () => {
+    if (!data) return;
+
+    // Sheet 1: Stats
+    const statsData = [
+      { Metric: 'Total Companies', Value: data.stats.companies },
+      { Metric: 'Total Airtime Volume', Value: `$${data.stats.volume.toLocaleString()}` },
+      { Metric: 'Active Promo Codes', Value: data.stats.promos },
+      { Metric: 'System Users', Value: data.stats.companies + 1 }
+    ];
+
+    // Sheet 2: Recent Companies
+    const companiesData = data.recentCompanies.map((c: any) => ({
+      'Company Name': c.companyName || c.name,
+      'Email': c.email,
+      'Date Joined': new Date(c.createdAt).toLocaleDateString(),
+      'Current Balance': `$${(c.wallet?.balance || 0).toLocaleString()}`,
+      'Status': c.status
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const wsStats = XLSX.utils.json_to_sheet(statsData);
+    const wsComp = XLSX.utils.json_to_sheet(companiesData);
+
+    XLSX.utils.book_append_sheet(wb, wsStats, "Platform Overview");
+    XLSX.utils.book_append_sheet(wb, wsComp, "Recent Companies");
+
+    XLSX.writeFile(wb, `AirTimeConnect_Dashboard_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+    setIsExportDropdownOpen(false);
+  };
+
+  const exportToPDF = () => {
+    if (!data) return;
+
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(99, 102, 241);
+    doc.text("AirTimeConnect Distribution Summary", 14, 22);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+
+    // Platform Stats Table
+    doc.setFontSize(14);
+    doc.setTextColor(50);
+    doc.text("Platform Performance Overview", 14, 45);
+
+    autoTable(doc, {
+      head: [["Metric", "Value"]],
+      body: [
+        ["Total Registered Companies", data.stats.companies.toString()],
+        ["Total Airtime Distributed", `$${data.stats.volume.toLocaleString()}`],
+        ["Active Campaigns", data.stats.promos.toString()],
+        ["Identified System Users", (data.stats.companies + 1).toString()]
+      ],
+      startY: 50,
+      theme: 'plain',
+      headStyles: { fontStyle: 'bold', textColor: [99, 102, 241] },
+      styles: { fontSize: 11, cellPadding: 4 }
+    });
+
+    // Recent Companies Table
+    const lastY = (doc as any).lastAutoTable.finalY || 80;
+    doc.setFontSize(14);
+    doc.setTextColor(50);
+    doc.text("Recently Onboarded Companies", 14, lastY + 15);
+
+    const tableColumn = ["Company", "Email", "Joined", "Balance", "Status"];
+    const tableRows = data.recentCompanies.map((c: any) => [
+      c.companyName || c.name,
+      c.email,
+      new Date(c.createdAt).toLocaleDateString(),
+      `$${(c.wallet?.balance || 0).toLocaleString()}`,
+      c.status
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: lastY + 20,
+      theme: 'grid',
+      headStyles: { fillColor: [99, 102, 241], fontStyle: 'bold' },
+      styles: { fontSize: 9 }
+    });
+
+    doc.save(`AirTimeConnect_Dashboard_${new Date().toISOString().split('T')[0]}.pdf`);
+    setIsExportDropdownOpen(false);
+  };
+
   const handleStatusUpdate = async (userId: string, status: UserStatus) => {
     try {
       await updateUserStatus(userId, status);
@@ -67,7 +165,7 @@ const AdminDashboard: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-500 font-medium">Loading platform data...</p>
+        <p className="text-gray-500 font-medium tracking-widest uppercase text-[10px] font-black">Synchronizing Data Node...</p>
       </div>
     );
   }
@@ -82,13 +180,39 @@ const AdminDashboard: React.FC = () => {
     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Platform Analytics</h2>
-          <p className="text-gray-500">Overview of system health and company activities.</p>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight">Platform Intelligence</h2>
+          <p className="text-gray-500 font-medium">Real-time oversight of system health and enterprise activity.</p>
         </div>
-        <button className="flex items-center space-x-2 px-5 py-2.5 bg-gray-900 text-white font-semibold rounded-xl hover:bg-black transition-all shadow-lg active:scale-95">
-          <Download className="w-5 h-5" />
-          <span>Export Reports</span>
-        </button>
+
+        <div className="relative">
+          <button
+            onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+            className="flex items-center space-x-2 px-6 py-3 bg-gray-900 text-white font-black text-sm rounded-[1.25rem] hover:bg-black transition-all shadow-xl active:scale-95 group"
+          >
+            <Download className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
+            <span>Generate Reports</span>
+            <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isExportDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isExportDropdownOpen && (
+            <div className="absolute right-0 mt-3 w-56 bg-white rounded-[1.5rem] shadow-2xl border border-gray-50 p-2 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
+              <button
+                onClick={exportToExcel}
+                className="w-full flex items-center space-x-3 px-4 py-4 text-sm font-black text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all"
+              >
+                <FileSpreadsheet className="w-5 h-5" />
+                <span>Excel Spreadsheet</span>
+              </button>
+              <button
+                onClick={exportToPDF}
+                className="w-full flex items-center space-x-3 px-4 py-4 text-sm font-black text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all"
+              >
+                <FileText className="w-5 h-5" />
+                <span>PDF Document</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -237,8 +361,8 @@ const AdminDashboard: React.FC = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${company.status === UserStatus.ACTIVE ? 'bg-green-100 text-green-700' :
-                        company.status === UserStatus.PENDING ? 'bg-amber-100 text-amber-700' :
-                          'bg-red-100 text-red-700'
+                      company.status === UserStatus.PENDING ? 'bg-amber-100 text-amber-700' :
+                        'bg-red-100 text-red-700'
                       }`}>
                       {company.status}
                     </span>

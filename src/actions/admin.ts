@@ -43,6 +43,42 @@ export async function getAdminDashboardData() {
     };
 }
 
+export async function getCompanies(page: number = 1, pageSize: number = 10, search: string = "") {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== "ADMIN") {
+        throw new Error("Unauthorized");
+    }
+
+    const where: any = {
+        role: UserRole.COMPANY,
+    };
+
+    if (search) {
+        where.OR = [
+            { name: { contains: search, mode: 'insensitive' } },
+            { companyName: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+        ];
+    }
+
+    const [companies, total] = await Promise.all([
+        prisma.user.findMany({
+            where,
+            include: { wallet: true },
+            orderBy: { createdAt: "desc" },
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+        }),
+        prisma.user.count({ where })
+    ]);
+
+    return {
+        companies,
+        total,
+        totalPages: Math.ceil(total / pageSize)
+    };
+}
+
 export async function getAllCompanies() {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== "ADMIN") {
