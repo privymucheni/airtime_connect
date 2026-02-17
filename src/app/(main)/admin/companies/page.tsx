@@ -36,12 +36,14 @@ const AdminCompanies: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<UserStatus | 'ALL'>('ALL');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
 
   const fetchCompanies = async () => {
     setIsLoading(true);
     try {
-      const data = await getCompanies(currentPage, pageSize, searchTerm);
+      const data = await getCompanies(currentPage, pageSize, searchTerm, statusFilter);
       setCompanies(data.companies);
       setTotalItems(data.total);
       setTotalPages(data.totalPages);
@@ -54,7 +56,7 @@ const AdminCompanies: React.FC = () => {
 
   useEffect(() => {
     fetchCompanies();
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, statusFilter]);
 
   // Handle search with debouncing would be better, but for now simple trigger
   const handleSearch = () => {
@@ -139,8 +141,8 @@ const AdminCompanies: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Registered Companies</h2>
-          <p className="text-gray-500 text-sm font-medium">Review, approve, and manage company accounts.</p>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight">Registered Companies</h2>
+          <p className="text-gray-500 text-lg font-medium">Review, approve, and manage company accounts.</p>
         </div>
         <div className="flex items-center space-x-3">
           <button
@@ -193,20 +195,53 @@ const AdminCompanies: React.FC = () => {
 
       <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden min-h-[500px]">
         <div className="p-8 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-lg">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 font-black" />
+          <div className="relative flex-1 max-w-3xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
             <input
               type="text"
               placeholder="Search companies by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-6 py-3.5 bg-gray-50 border border-transparent focus:border-indigo-500 rounded-[1.5rem] outline-none transition-all font-medium text-sm"
+              className="w-full pl-12 pr-6 py-4 bg-white border-2 border-gray-100 focus:border-indigo-500 focus:bg-white rounded-[1.5rem] outline-none transition-all font-bold text-sm text-gray-900 shadow-sm placeholder:text-gray-400"
             />
           </div>
-          <button className="flex items-center space-x-2 px-5 py-3.5 bg-gray-50 hover:bg-gray-100 rounded-[1.5rem] text-gray-500 font-bold text-sm transition-all border border-transparent hover:border-gray-200">
-            <Filter className="w-4 h-4" />
-            <span>Advanced Filters</span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`flex items-center space-x-2 px-5 py-3.5 rounded-[1.5rem] font-bold text-sm transition-all border ${statusFilter !== 'ALL' || isFilterOpen
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-600'
+                  : 'bg-gray-50 border-transparent hover:border-gray-200 text-gray-500'
+                }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span>{statusFilter === 'ALL' ? 'Advanced Filters' : `Status: ${statusFilter}`}</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isFilterOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-50 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 mb-1">
+                  Filter by Status
+                </div>
+                {(['ALL', ...Object.values(UserStatus)] as const).map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => {
+                      setStatusFilter(status);
+                      setCurrentPage(1);
+                      setIsFilterOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${statusFilter === status
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+                      }`}
+                  >
+                    {status === 'ALL' ? 'All Companies' : status.charAt(0) + status.slice(1).toLowerCase()}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {isLoading ? (
@@ -228,11 +263,11 @@ const AdminCompanies: React.FC = () => {
               <table className="w-full text-left">
                 <thead className="bg-gray-50/50 border-b border-gray-50">
                   <tr>
-                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Company Profile</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Current Balance</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Compliance Status</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Registered On</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Actions</th>
+                    <th className="px-8 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Company Profile</th>
+                    <th className="px-8 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Account Balance</th>
+                    <th className="px-8 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Compliance Status</th>
+                    <th className="px-8 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Registration Date</th>
+                    <th className="px-8 py-5 text-sm font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -251,46 +286,45 @@ const AdminCompanies: React.FC = () => {
                             {(company.companyName || company.name).charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="text-sm font-black text-gray-900 group-hover:text-indigo-600 transition-colors">{company.companyName || company.name}</p>
-                            <p className="text-xs text-gray-400 font-medium">{company.email}</p>
+                            <p className="text-xl font-black text-gray-900 group-hover:text-indigo-600 transition-colors leading-none mb-1">{company.companyName || company.name}</p>
+                            <p className="text-base text-gray-400 font-bold">{company.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-5">
+                      <td className="px-8 py-6">
                         <div className="flex flex-col">
-                          <span className="text-sm font-black text-gray-900">${(company.wallet?.balance || 0).toLocaleString()}</span>
-                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">USD Wallet</span>
+                          <span className="text-xl font-black text-gray-900">${(company.wallet?.balance || 0).toLocaleString()}</span>
+                          <span className="text-sm text-gray-400 font-bold uppercase tracking-wider">USD Wallet</span>
                         </div>
                       </td>
-                      <td className="px-8 py-5">
-                        <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${company.status === UserStatus.ACTIVE ? 'bg-green-100 text-green-700' :
+                      <td className="px-8 py-6">
+                        <span className={`inline-flex px-4 py-2 rounded-xl text-sm font-black uppercase tracking-wider ${company.status === UserStatus.ACTIVE ? 'bg-green-100 text-green-700' :
                           company.status === UserStatus.PENDING ? 'bg-amber-100 text-amber-700' :
                             'bg-red-100 text-red-700'
                           }`}>
                           {company.status}
                         </span>
                       </td>
-                      <td className="px-8 py-5">
-                        <p className="text-sm font-bold text-gray-500">
-                          {new Date(company.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      <td className="px-8 py-6">
+                        <p className="text-base font-bold text-gray-600">
+                          {new Date(company.createdAt).toLocaleDateString()}
                         </p>
                       </td>
                       <td className="px-8 py-5 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end space-x-2">
-                          {company.status !== UserStatus.ACTIVE && (
+                          {company.status === UserStatus.ACTIVE ? (
                             <button
-                              onClick={() => handleStatusUpdate(company.id, UserStatus.ACTIVE)}
+                              onClick={() => handleStatusUpdate(company.id, UserStatus.SUSPENDED)}
                               className="p-2.5 text-green-600 hover:bg-green-100 rounded-xl transition-all"
-                              title="Activate Account"
+                              title="Active - Click to Suspend"
                             >
                               <CheckCircle2 className="w-5 h-5" />
                             </button>
-                          )}
-                          {company.status !== UserStatus.SUSPENDED && (
+                          ) : (
                             <button
-                              onClick={() => handleStatusUpdate(company.id, UserStatus.SUSPENDED)}
+                              onClick={() => handleStatusUpdate(company.id, UserStatus.ACTIVE)}
                               className="p-2.5 text-red-600 hover:bg-red-100 rounded-xl transition-all"
-                              title="Suspend Account"
+                              title="Suspended - Click to Activate"
                             >
                               <XCircle className="w-5 h-5" />
                             </button>
@@ -308,7 +342,7 @@ const AdminCompanies: React.FC = () => {
 
             {/* Pagination Controls */}
             <div className="p-8 border-t border-gray-50 bg-gray-50/30 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center space-x-4 text-xs font-black text-gray-400 uppercase tracking-widest">
+              <div className="flex items-center space-x-4 text-sm font-black text-gray-400 uppercase tracking-widest">
                 <span>Showing</span>
                 <select
                   value={pageSize}
@@ -350,8 +384,8 @@ const AdminCompanies: React.FC = () => {
                         <button
                           onClick={() => setCurrentPage(page)}
                           className={`w-11 h-11 rounded-2xl text-sm font-black transition-all ${currentPage === page
-                              ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100 scale-110'
-                              : 'bg-white border border-gray-100 text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                            ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100 scale-110'
+                            : 'bg-white border border-gray-100 text-gray-400 hover:bg-gray-50 hover:text-gray-600'
                             }`}
                         >
                           {page}

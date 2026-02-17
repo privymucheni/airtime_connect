@@ -112,7 +112,7 @@ const AdminDashboard: React.FC = () => {
       head: [["Metric", "Value"]],
       body: [
         ["Total Registered Companies", data.stats.companies.toString()],
-        ["Total Airtime Distributed", `$${data.stats.volume.toLocaleString()}`],
+        ["Total Credited Volume", `$${data.stats.volume.toLocaleString()}`],
         ["Active Campaigns", data.stats.promos.toString()],
         ["Identified System Users", (data.stats.companies + 1).toString()]
       ],
@@ -181,7 +181,7 @@ const AdminDashboard: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Platform Intelligence</h2>
-          <p className="text-gray-500 font-medium">Real-time oversight of system health and enterprise activity.</p>
+          <p className="text-gray-500 font-medium text-lg">Real-time oversight of system health and enterprise activity.</p>
         </div>
 
         <div className="relative">
@@ -220,8 +220,8 @@ const AdminDashboard: React.FC = () => {
           <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl w-fit mb-4">
             <Building2 className="w-6 h-6" />
           </div>
-          <p className="text-sm text-gray-500 font-medium">Total Companies</p>
-          <p className="text-3xl font-black text-gray-900 mt-1">{data?.stats?.companies || 0}</p>
+          <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Total Companies</p>
+          <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">{data?.stats?.companies || 0}</p>
           <div className="mt-2 flex items-center text-xs font-bold text-green-600">
             <TrendingUp className="w-3 h-3 mr-1" />
             Live tracking
@@ -232,8 +232,8 @@ const AdminDashboard: React.FC = () => {
           <div className="p-3 bg-green-50 text-green-600 rounded-2xl w-fit mb-4">
             <Activity className="w-6 h-6" />
           </div>
-          <p className="text-sm text-gray-500 font-medium">Total Airtime Volume</p>
-          <p className="text-3xl font-black text-gray-900 mt-1">${(data?.stats?.volume || 0).toLocaleString()}</p>
+          <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Total Funded Volume</p>
+          <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">${(data?.stats?.volume || 0).toLocaleString()}</p>
           <div className="mt-2 flex items-center text-xs font-bold text-green-600">
             <TrendingUp className="w-3 h-3 mr-1" />
             +18.5%
@@ -244,8 +244,8 @@ const AdminDashboard: React.FC = () => {
           <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl w-fit mb-4">
             <BarChart3 className="w-6 h-6" />
           </div>
-          <p className="text-sm text-gray-500 font-medium">Active Promo Codes</p>
-          <p className="text-3xl font-black text-gray-900 mt-1">{data?.stats?.promos || 0}</p>
+          <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Active Promo Codes</p>
+          <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">{data?.stats?.promos || 0}</p>
           <div className="mt-2 flex items-center text-xs font-bold text-blue-600">
             Running campaigns
           </div>
@@ -255,8 +255,8 @@ const AdminDashboard: React.FC = () => {
           <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl w-fit mb-4">
             <Users className="w-6 h-6" />
           </div>
-          <p className="text-sm text-gray-500 font-medium">System Users</p>
-          <p className="text-3xl font-black text-gray-900 mt-1">{(data?.stats?.companies || 0) + 1}</p>
+          <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">System Users</p>
+          <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">{(data?.stats?.companies || 0) + 1}</p>
           <div className="mt-2 flex items-center text-xs font-bold text-indigo-600">
             Admin included
           </div>
@@ -315,14 +315,14 @@ const AdminDashboard: React.FC = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-3 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <div className="relative flex-1 md:max-w-2xl">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Quick search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-transparent focus:border-indigo-500 rounded-xl outline-none transition-all text-sm"
+                className="w-full pl-12 pr-6 py-4 bg-white border-2 border-gray-100 focus:border-indigo-500 focus:bg-white rounded-2xl outline-none transition-all text-sm font-bold text-gray-900 shadow-sm placeholder:text-gray-400"
               />
             </div>
           </div>
@@ -332,63 +332,64 @@ const AdminDashboard: React.FC = () => {
           <table className="w-full text-left">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Company</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Joined</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Balance</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                <th className="px-6 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Company Name</th>
+                <th className="px-6 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Onboarding Date</th>
+                <th className="px-6 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Account Balance</th>
+                <th className="px-6 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Security Status</th>
+                <th className="px-6 py-5 text-sm font-black text-gray-400 uppercase tracking-widest text-right">Control Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filteredCompanies.map((company: any) => (
                 <tr key={company.id} className="hover:bg-gray-50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold group-hover:scale-110 transition-transform">
+                  <td className="px-6 py-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-black text-xl shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
                         {(company.companyName || company.name || '?').charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-gray-900">{company.companyName || company.name}</p>
-                        <p className="text-xs text-gray-500">{company.email}</p>
+                        <p className="text-xl font-black text-gray-900 leading-none mb-1">{company.companyName || company.name}</p>
+                        <p className="text-base text-gray-400 font-bold">{company.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(company.createdAt).toLocaleDateString()}
+                  <td className="px-6 py-6 font-medium">
+                    <p className="text-base font-bold text-gray-600">
+                      {new Date(company.createdAt).toLocaleDateString()}
+                    </p>
                   </td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm font-bold text-gray-900">${(company.wallet?.balance || 0).toLocaleString()}</p>
+                  <td className="px-6 py-6">
+                    <p className="text-xl font-black text-gray-900 tracking-tight">${(company.wallet?.balance || 0).toLocaleString()}</p>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${company.status === UserStatus.ACTIVE ? 'bg-green-100 text-green-700' :
+                  <td className="px-6 py-6">
+                    <span className={`inline-flex px-4 py-2 rounded-xl text-sm font-black uppercase tracking-wider ${company.status === UserStatus.ACTIVE ? 'bg-green-100 text-green-700' :
                       company.status === UserStatus.PENDING ? 'bg-amber-100 text-amber-700' :
                         'bg-red-100 text-red-700'
                       }`}>
                       {company.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      {company.status !== UserStatus.ACTIVE && (
-                        <button
-                          onClick={() => handleStatusUpdate(company.id, UserStatus.ACTIVE)}
-                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                          title="Activate Account"
-                        >
-                          <CheckCircle2 className="w-5 h-5" />
-                        </button>
-                      )}
-                      {company.status !== UserStatus.SUSPENDED && (
+                  <td className="px-6 py-6 text-right">
+                    <div className="flex items-center justify-end space-x-3">
+                      {company.status === UserStatus.ACTIVE ? (
                         <button
                           onClick={() => handleStatusUpdate(company.id, UserStatus.SUSPENDED)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Suspend Account"
+                          className="p-2.5 text-green-600 hover:bg-green-50 rounded-xl transition-all"
+                          title="Account is Active - Click to Suspend"
                         >
-                          <XCircle className="w-5 h-5" />
+                          <CheckCircle2 className="w-6 h-6" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleStatusUpdate(company.id, UserStatus.ACTIVE)}
+                          className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                          title="Account is Suspended - Click to Activate"
+                        >
+                          <XCircle className="w-6 h-6" />
                         </button>
                       )}
-                      <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors">
-                        <MoreVertical className="w-5 h-5" />
+                      <button className="p-2.5 text-gray-400 hover:bg-gray-100 rounded-xl transition-all">
+                        <MoreVertical className="w-6 h-6" />
                       </button>
                     </div>
                   </td>

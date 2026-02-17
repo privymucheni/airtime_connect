@@ -32,7 +32,7 @@ const AdminRevenue: React.FC = () => {
 
         doc.setFontSize(10);
         doc.setTextColor(100);
-        doc.text("Total Airtime Volume", 20, 50);
+        doc.text("Total Funded Volume", 20, 50);
         doc.text("Gross Platform Profit", 85, 50);
         doc.text("Average Margin", 150, 50);
 
@@ -47,7 +47,7 @@ const AdminRevenue: React.FC = () => {
         doc.setTextColor(99, 102, 241);
         doc.text("Monthly Performance Breakdown", 14, 90);
 
-        const tableColumn = ["Month", "Airtime Volume ($)", "Platform Margin ($)", "Tx Count"];
+        const tableColumn = ["Month", "Funded Volume ($)", "Platform Margin ($)", "Tx Count"];
         const tableRows = data.chartData.map((m: any) => [
             m.month,
             `$${m.airtime.toLocaleString()}`,
@@ -128,8 +128,8 @@ const AdminRevenue: React.FC = () => {
                             Stable
                         </div>
                     </div>
-                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Gross Platform Profit</p>
-                    <p className="text-4xl font-black text-gray-900 mt-2">
+                    <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Gross Platform Profit</p>
+                    <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">
                         ${(data?.totalProfit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </p>
                 </div>
@@ -144,8 +144,8 @@ const AdminRevenue: React.FC = () => {
                             Live
                         </div>
                     </div>
-                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Total Airtime Volume</p>
-                    <p className="text-4xl font-black text-gray-900 mt-2">
+                    <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Total Funded Volume</p>
+                    <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">
                         ${(data?.totalVolume || 0).toLocaleString()}
                     </p>
                 </div>
@@ -159,8 +159,8 @@ const AdminRevenue: React.FC = () => {
                             Average
                         </div>
                     </div>
-                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Avg. Profit Margin</p>
-                    <p className="text-4xl font-black text-gray-900 mt-2">
+                    <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Avg. Profit Margin</p>
+                    <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">
                         {data?.avgMargin}%
                     </p>
                 </div>
@@ -169,8 +169,8 @@ const AdminRevenue: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm">
                     <div className="flex items-center justify-between mb-10">
-                        <h3 className="font-black text-xl text-gray-900 tracking-tight">Revenue Analysis (6M)</h3>
-                        <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-4 py-1.5 rounded-full uppercase tracking-widest">Platform Earnings</span>
+                        <h3 className="font-black text-2xl text-gray-900 tracking-tight">Revenue Analysis (6M)</h3>
+                        <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-5 py-2 rounded-full uppercase tracking-widest">Platform Earnings</span>
                     </div>
                     <div className="h-[400px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -196,8 +196,8 @@ const AdminRevenue: React.FC = () => {
 
                 <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm">
                     <div className="flex items-center justify-between mb-10">
-                        <h3 className="font-black text-xl text-gray-900 tracking-tight">Margin vs Volume</h3>
-                        <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full uppercase tracking-widest">Distribution Balance</span>
+                        <h3 className="font-black text-2xl text-gray-900 tracking-tight">Margin vs Volume</h3>
+                        <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-5 py-2 rounded-full uppercase tracking-widest">Distribution Balance</span>
                     </div>
                     <div className="h-[400px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -219,23 +219,22 @@ const AdminRevenue: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-gray-900 rounded-[3rem] p-12 text-white overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 blur-[100px] -mr-48 -mt-48 rounded-full"></div>
+            <div className="bg-white rounded-[3rem] p-12 text-gray-900 border border-gray-100 shadow-sm overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 blur-[100px] -mr-48 -mt-48 rounded-full"></div>
                 <div className="relative z-10">
-                    <h3 className="text-2xl font-black mb-2">Platform Performance Insight</h3>
-                    <p className="text-gray-400 max-w-2xl leading-relaxed">
-                        Based on the current trajectory, the platform is seeing a consistent <span className="text-indigo-400 font-bold">1.5% profit margin</span> across all airtime distributions.
-                        Transactional volume has normalized over the last 6 months with healthy growth in enterprise onboardings.
+                    <h3 className="text-4xl font-black mb-4">Platform Performance Insight</h3>
+                    <p className="text-xl text-gray-500 w-full leading-relaxed">
+                        Based on the current trajectory, the platform is seeing a consistent <span className="text-indigo-600 font-black">1.5% profit margin</span> across all airtime distributions. Transactional volume has normalised over the last 6 months with healthy growth in enterprise onboardings.
                     </p>
                     <div className="flex items-center space-x-6 mt-10">
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Efficiency Rate</span>
-                            <span className="text-2xl font-black">98.4%</span>
+                            <span className="text-xs font-black text-indigo-600 uppercase tracking-widest mb-1 text-opacity-70">Efficiency Rate</span>
+                            <span className="text-3xl font-black">98.4%</span>
                         </div>
-                        <div className="h-10 w-px bg-white/10"></div>
+                        <div className="h-10 w-px bg-gray-200"></div>
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Tx Success</span>
-                            <span className="text-2xl font-black">99.9%</span>
+                            <span className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-1 text-opacity-70">Tx Success</span>
+                            <span className="text-3xl font-black">99.9%</span>
                         </div>
                     </div>
                 </div>

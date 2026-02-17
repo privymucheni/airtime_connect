@@ -15,6 +15,7 @@ import {
     Clock
 } from 'lucide-react';
 import { UserStatus } from '@prisma/client';
+import { useRouter } from 'next/navigation';
 
 interface CompanyDetailsSheetProps {
     isOpen: boolean;
@@ -29,7 +30,14 @@ const CompanyDetailsSheet: React.FC<CompanyDetailsSheetProps> = ({
     company,
     onStatusUpdate
 }) => {
+    const router = useRouter();
+
     if (!isOpen || !company) return null;
+
+    const handleViewLogs = () => {
+        const searchName = company.companyName || company.name;
+        router.push(`/admin/logs?search=${encodeURIComponent(searchName)}`);
+    };
 
     return (
         <>
@@ -54,8 +62,8 @@ const CompanyDetailsSheet: React.FC<CompanyDetailsSheetProps> = ({
                                 </h2>
                                 <div className="flex items-center mt-1">
                                     <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${company.status === UserStatus.ACTIVE ? 'bg-green-100 text-green-700' :
-                                            company.status === UserStatus.PENDING ? 'bg-amber-100 text-amber-700' :
-                                                'bg-red-100 text-red-700'
+                                        company.status === UserStatus.PENDING ? 'bg-amber-100 text-amber-700' :
+                                            'bg-red-100 text-red-700'
                                         }`}>
                                         {company.status}
                                     </span>
@@ -175,7 +183,10 @@ const CompanyDetailsSheet: React.FC<CompanyDetailsSheetProps> = ({
                                     </button>
                                 )}
 
-                                <button className="w-full py-4 bg-white/5 hover:bg-white/10 rounded-2xl font-black text-sm flex items-center justify-center space-x-3 transition-all">
+                                <button
+                                    onClick={handleViewLogs}
+                                    className="w-full py-4 bg-white/5 hover:bg-white/10 rounded-2xl font-black text-sm flex items-center justify-center space-x-3 transition-all"
+                                >
                                     <ArrowUpRight className="w-5 h-5 text-indigo-400" />
                                     <span>View Full Logs</span>
                                 </button>

@@ -28,10 +28,14 @@ const getLogIcon = (action: string) => {
     return { icon: Activity, color: 'text-blue-600', bg: 'bg-blue-50' };
 };
 
+import { useSearchParams } from 'next/navigation';
+
 const AdminSystemLogs: React.FC = () => {
+    const searchParams = useSearchParams();
+    const querySearch = searchParams.get('search');
     const [logs, setLogs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(querySearch || '');
 
     const fetchLogs = async () => {
         setIsLoading(true);
@@ -49,6 +53,12 @@ const AdminSystemLogs: React.FC = () => {
         fetchLogs();
     }, []);
 
+    useEffect(() => {
+        if (querySearch) {
+            setSearchTerm(querySearch);
+        }
+    }, [querySearch]);
+
     const filteredLogs = logs.filter(log =>
         log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (log.user?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -56,14 +66,14 @@ const AdminSystemLogs: React.FC = () => {
     );
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-700">
+        <div className="w-full space-y-8 animate-in fade-in duration-700">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h2 className="text-3xl font-black text-gray-900 tracking-tight flex items-center">
                         <Activity className="w-8 h-8 mr-3 text-indigo-600" />
                         System Audit Trail
                     </h2>
-                    <p className="text-gray-500 font-medium mt-1">Real-time oversight of all administrative and financial operations.</p>
+                    <p className="text-gray-500 font-bold text-xl mt-1">Real-time oversight of all administrative and financial operations.</p>
                 </div>
                 <div className="flex items-center space-x-3">
                     <button
@@ -82,7 +92,7 @@ const AdminSystemLogs: React.FC = () => {
 
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden min-h-[600px] flex flex-col">
                 <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
-                    <div className="relative flex-1 max-w-lg">
+                    <div className="relative flex-1 max-w-3xl">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 font-black" />
                         <input
                             type="text"
@@ -122,23 +132,23 @@ const AdminSystemLogs: React.FC = () => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between mb-2">
-                                            <p className="text-base font-bold text-gray-900 leading-snug pr-8 tracking-tight capitalize">
+                                            <p className="text-lg font-black text-gray-900 leading-snug pr-8 tracking-tight">
                                                 {log.message}
                                             </p>
-                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-100 px-3 py-1 rounded-full whitespace-nowrap">
+                                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest bg-gray-100 px-4 py-1.5 rounded-full whitespace-nowrap">
                                                 {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
                                             </span>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-4">
-                                            <div className="flex items-center text-xs font-bold text-gray-500 bg-white border border-gray-100 px-3 py-1.5 rounded-xl shadow-sm">
-                                                <User className="w-3.5 h-3.5 mr-2 text-indigo-400" />
+                                            <div className="flex items-center text-sm font-bold text-gray-500 bg-white border border-gray-100 px-4 py-2 rounded-xl shadow-sm">
+                                                <User className="w-4 h-4 mr-2 text-indigo-400" />
                                                 <span>{log.user?.companyName || log.user?.name || 'System Action'}</span>
                                             </div>
-                                            <div className="flex items-center text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl uppercase tracking-widest">
-                                                <Settings className="w-3 h-3 mr-2" />
+                                            <div className="flex items-center text-xs font-black text-indigo-600 bg-indigo-50 px-4 py-2 rounded-xl uppercase tracking-widest">
+                                                <Settings className="w-4 h-4 mr-2" />
                                                 {log.action || 'GENERAL'}
                                             </div>
-                                            <div className="flex items-center text-[10px] font-black text-gray-400 italic px-2">
+                                            <div className="flex items-center text-xs font-black text-gray-400 italic px-2">
                                                 ID: {log.id.slice(-8)}
                                             </div>
                                         </div>
@@ -150,10 +160,10 @@ const AdminSystemLogs: React.FC = () => {
                 </div>
 
                 <div className="p-8 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <p className="text-sm font-black text-gray-400 uppercase tracking-widest">
                         Showing {filteredLogs.length} of {logs.length} Total Events
                     </p>
-                    <button className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-2xl hover:bg-gray-100 font-bold text-xs transition-all shadow-sm">
+                    <button className="px-8 py-3 bg-white border border-gray-200 text-gray-700 rounded-2xl hover:bg-gray-100 font-bold text-sm transition-all shadow-sm">
                         Load Full History
                     </button>
                 </div>
@@ -161,8 +171,8 @@ const AdminSystemLogs: React.FC = () => {
 
             <div className="p-10 bg-indigo-600 rounded-[3rem] text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-indigo-200 overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-3xl -mr-32 -mt-32 rounded-full"></div>
-                <div className="relative z-10 max-w-xl text-center md:text-left">
-                    <h3 className="text-2xl font-black mb-3">Enterprise Security Protocol</h3>
+                <div className="relative z-10 max-w-5xl text-center md:text-left">
+                    <h3 className="text-3xl font-black mb-3">Enterprise Security Protocol</h3>
                     <p className="text-indigo-100 font-medium leading-relaxed opacity-90">
                         System logs are immutable and stored for 36 months to ensure regulatory compliance.
                         All sensitive financial data is masked according to international data protection standards.
@@ -182,5 +192,18 @@ const AdminSystemLogs: React.FC = () => {
     );
 };
 
-export default AdminSystemLogs;
+const AdminSystemLogsPage = () => {
+    return (
+        <React.Suspense fallback={
+            <div className="flex flex-col items-center justify-center py-32">
+                <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-6"></div>
+                <p className="text-gray-400 font-black uppercase tracking-widest text-xs">Loading Secure Audit Interface...</p>
+            </div>
+        }>
+            <AdminSystemLogs />
+        </React.Suspense>
+    );
+};
+
+export default AdminSystemLogsPage;
 

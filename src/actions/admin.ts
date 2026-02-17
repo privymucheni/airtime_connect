@@ -18,7 +18,7 @@ export async function getAdminDashboardData() {
     });
 
     const totalAirtimeDistributed = await prisma.transaction.aggregate({
-        where: { type: "DEBIT" },
+        where: { type: "CREDIT" },
         _sum: { amount: true },
     });
 
@@ -43,7 +43,7 @@ export async function getAdminDashboardData() {
     };
 }
 
-export async function getCompanies(page: number = 1, pageSize: number = 10, search: string = "") {
+export async function getCompanies(page: number = 1, pageSize: number = 10, search: string = "", status: UserStatus | 'ALL' = 'ALL') {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== "ADMIN") {
         throw new Error("Unauthorized");
@@ -52,6 +52,10 @@ export async function getCompanies(page: number = 1, pageSize: number = 10, sear
     const where: any = {
         role: UserRole.COMPANY,
     };
+
+    if (status !== 'ALL') {
+        where.status = status;
+    }
 
     if (search) {
         where.OR = [
@@ -98,6 +102,11 @@ export async function updateUserStatus(userId: string, status: UserStatus) {
         throw new Error("Unauthorized");
     }
 
+    const targetUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true, companyName: true }
+    });
+
     await prisma.user.update({
         where: { id: userId },
         data: { status },
@@ -105,7 +114,7 @@ export async function updateUserStatus(userId: string, status: UserStatus) {
 
     await createLog({
         type: 'ADMIN',
-        message: `Updated status of user ${userId} to ${status}`,
+        message: `Updated status of ${targetUser?.companyName || targetUser?.name || userId} to ${status}`,
     });
 
     revalidatePath("/admin/companies");
@@ -169,8 +178,14 @@ export async function deletePromoCode(id: string) {
         throw new Error("Unauthorized");
     }
 
+    const promo = await prisma.promoCode.findUnique({ where: { id } });
     await prisma.promoCode.delete({
         where: { id },
+    });
+
+    await createLog({
+        type: 'ADMIN',
+        message: `Deleted promo code: ${promo?.code || id}`,
     });
 
     revalidatePath("/admin/promo-codes");
@@ -183,9 +198,14 @@ export async function togglePromoCodeStatus(id: string, isActive: boolean) {
         throw new Error("Unauthorized");
     }
 
-    await prisma.promoCode.update({
+    const promo = await prisma.promoCode.update({
         where: { id },
         data: { isActive },
+    });
+
+    await createLog({
+        type: 'ADMIN',
+        message: `${isActive ? 'Activated' : 'Deactivated'} promo code: ${promo.code}`,
     });
 
     revalidatePath("/admin/promo-codes");
@@ -226,7 +246,7 @@ export async function getRevenueAnalytics() {
     transactions.forEach(tx => {
         const monthName = months[new Date(tx.createdAt).getMonth()];
         if (monthlyData[monthName]) {
-            if (tx.type === "DEBIT") {
+            if (tx.type === "CREDIT") {
                 monthlyData[monthName].airtime += tx.amount;
                 // Assuming a fixed platform margin of 1.5% for now as there's no margin field in schema
                 const estimatedMargin = tx.amount * 0.015;
@@ -239,8 +259,8 @@ export async function getRevenueAnalytics() {
 
     return {
         chartData: Object.values(monthlyData).reverse(),
-        totalVolume: transactions.filter(t => t.type === "DEBIT").reduce((acc, curr) => acc + curr.amount, 0),
-        totalProfit: transactions.filter(t => t.type === "DEBIT").reduce((acc, curr) => acc + (curr.amount * 0.015), 0),
+        totalVolume: transactions.filter(t => t.type === "CREDIT").reduce((acc, curr) => acc + curr.amount, 0),
+        totalProfit: transactions.filter(t => t.type === "CREDIT").reduce((acc, curr) => acc + (curr.amount * 0.015), 0),
         avgMargin: 1.5 // Fixed for this implementation
     };
 }

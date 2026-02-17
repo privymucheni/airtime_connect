@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { X, User, Mail, Building2, Shield, CreditCard, ExternalLink } from 'lucide-react';
+import { X, User, Mail, Building2, Shield, CreditCard, ExternalLink, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { UserRole } from '@/types';
+import { useAuth } from './AuthContext';
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface ProfileModalProps {
 }
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) => {
+    const { logout } = useAuth();
     if (!isOpen || !user) return null;
 
     return (
@@ -85,7 +87,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
                         )}
                     </div>
 
-                    <div className="pt-4">
+                    <div className="pt-4 space-y-4">
                         <Link
                             href={user.role === UserRole.ADMIN ? '/admin/settings' : '/company/settings'}
                             onClick={onClose}
@@ -94,6 +96,17 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
                             <span>Go to Detailed Settings</span>
                             <ExternalLink className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </Link>
+
+                        <button
+                            onClick={() => {
+                                onClose();
+                                logout();
+                            }}
+                            className="w-full flex items-center justify-center space-x-3 p-5 bg-red-50 text-red-600 font-black rounded-2xl hover:bg-red-100 transition-all group border border-red-100"
+                        >
+                            <span>Sign Out</span>
+                            <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                        </button>
                     </div>
                 </div>
             </div>

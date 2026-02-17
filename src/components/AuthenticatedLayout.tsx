@@ -62,11 +62,11 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) =
             )}
 
             <aside className={`
-        fixed inset-y-0 left-0 bg-slate-900 text-white z-50 transition-all duration-300 lg:translate-x-0 lg:static
+        fixed inset-y-0 left-0 bg-slate-900 text-white z-50 lg:translate-x-0 lg:static
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         ${isCollapsed ? 'w-24' : 'w-80'}
       `}>
-                <div className={`p-10 transition-all duration-300 ${isCollapsed ? 'px-4 text-center' : 'px-10'}`}>
+                <div className={`p-10 ${isCollapsed ? 'px-4 text-center' : 'px-10'}`}>
                     <h1 className={`font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-indigo-500 bg-clip-text text-transparent transition-all duration-300 ${isCollapsed ? 'text-xl' : 'text-3xl'}`}>
                         {isCollapsed ? 'AC' : 'AirTimeConnect'}
                     </h1>
@@ -134,30 +134,43 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) =
 
                     <div className="flex-1 lg:flex-none"></div>
 
-                    <div className="flex items-center space-x-8">
+                    <div className="flex items-center space-x-6">
                         {user.role === UserRole.COMPANY && (
                             <div className="hidden sm:flex flex-col items-end px-6 py-2 border-l-2 border-indigo-50 bg-indigo-50/20 rounded-2xl">
                                 <span className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em] mb-0.5">Available Balance</span>
                                 <span className="text-3xl font-black text-indigo-600 font-mono tracking-tighter leading-none">${user.balance.toLocaleString()}</span>
                             </div>
                         )}
-                        <div
-                            onClick={() => setIsProfileOpen(true)}
-                            className="flex items-center space-x-4 p-2 hover:bg-gray-50 rounded-2xl cursor-pointer transition-all group"
-                        >
-                            <div className="text-right hidden sm:block">
-                                <p className="text-lg font-black text-gray-900 leading-tight group-hover:text-indigo-600 transition-colors">{user.name}</p>
-                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">{user.companyName || user.email}</p>
+
+                        <div className="flex items-center space-x-4">
+                            <div
+                                onClick={() => setIsProfileOpen(true)}
+                                className="flex items-center space-x-4 p-2 hover:bg-gray-50 rounded-2xl cursor-pointer transition-all group"
+                            >
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-lg font-black text-gray-900 leading-tight group-hover:text-indigo-600 transition-colors">{user.name}</p>
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">{user.companyName || user.email}</p>
+                                </div>
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center text-indigo-700 font-black text-xl border-4 border-white shadow-xl group-hover:scale-105 transition-transform">
+                                    {user.name.charAt(0)}
+                                </div>
                             </div>
-                            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center text-indigo-700 font-black text-xl border-4 border-white shadow-xl group-hover:scale-105 transition-transform">
-                                {user.name.charAt(0)}
-                            </div>
+
+                            <button
+                                onClick={logout}
+                                className="p-4 text-red-500 hover:bg-red-50 rounded-2xl transition-all border border-transparent hover:border-red-100"
+                                title="Sign Out"
+                            >
+                                <LogOut className="w-6 h-6" />
+                            </button>
                         </div>
                     </div>
                 </header>
 
-                <div className={`flex-1 overflow-y-auto transition-all duration-300 ${isCollapsed ? 'p-6 lg:p-8' : 'p-12 lg:p-16'}`}>
-                    {children}
+                <div className="flex-1 overflow-y-auto">
+                    <div className="max-w-[1600px] mx-auto p-8 lg:p-10">
+                        {children}
+                    </div>
                 </div>
             </main>
 

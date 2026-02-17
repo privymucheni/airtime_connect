@@ -76,8 +76,8 @@ const AdminPromoCodes: React.FC = () => {
         <div className="space-y-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-5xl font-black text-gray-900 leading-tight">Promo Codes</h2>
-                    <p className="text-xl text-gray-500 font-medium mt-2">Manage incentives and discount campaigns.</p>
+                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Promo Codes</h2>
+                    <p className="text-lg text-gray-500 font-medium mt-1">Manage incentives and discount campaigns.</p>
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
@@ -131,20 +131,20 @@ const AdminPromoCodes: React.FC = () => {
                             </div>
 
                             <div className="space-y-2 mb-8">
-                                <h3 className="text-4xl font-black text-gray-900 tracking-tight font-mono uppercase leading-none">{promo.code}</h3>
+                                <h3 className="text-5xl font-black text-gray-900 tracking-tight font-mono uppercase leading-none">{promo.code}</h3>
                                 <p className="text-indigo-600 font-extrabold text-2xl">+{promo.discountPercent}% Bonus Airtime</p>
                             </div>
 
                             <div className="pt-8 border-t border-gray-50 flex items-center justify-between">
                                 <div className="flex items-center space-x-3">
-                                    <div className={`w-3 h-3 rounded-full ${promo.isActive ? 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]' : 'bg-gray-300'}`}></div>
-                                    <span className={`text-xs font-black uppercase tracking-widest ${promo.isActive ? 'text-green-600' : 'text-gray-400'}`}>
+                                    <div className={`w-4 h-4 rounded-full ${promo.isActive ? 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]' : 'bg-gray-300'}`}></div>
+                                    <span className={`text-sm font-black uppercase tracking-widest ${promo.isActive ? 'text-green-600' : 'text-gray-400'}`}>
                                         {promo.isActive ? 'Active' : 'Inactive'}
                                     </span>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs text-gray-400 uppercase font-bold tracking-widest mb-1">Expires</p>
-                                    <p className="text-base font-black text-gray-700">{new Date(promo.expiryDate).toLocaleDateString()}</p>
+                                    <p className="text-xs text-gray-400 uppercase font-black tracking-widest mb-1">Expires</p>
+                                    <p className="text-lg font-black text-gray-700">{new Date(promo.expiryDate).toLocaleDateString()}</p>
                                 </div>
                             </div>
                         </div>
@@ -171,8 +171,8 @@ const AdminPromoCodes: React.FC = () => {
                         </div>
 
                         <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Promo Code</label>
+                            <div className="space-y-3">
+                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Promo Code</label>
                                 <div className="relative">
                                     <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                     <input
@@ -187,8 +187,8 @@ const AdminPromoCodes: React.FC = () => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Bonus %</label>
+                                <div className="space-y-3">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Bonus %</label>
                                     <div className="relative">
                                         <Percent className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                         <input
@@ -201,8 +201,8 @@ const AdminPromoCodes: React.FC = () => {
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Expiry Date</label>
+                                <div className="space-y-3">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Expiry Date</label>
                                     <div className="relative">
                                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                         <input
