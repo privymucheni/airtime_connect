@@ -98,18 +98,18 @@ const TransactionHistoryPage = () => {
         <div className="w-full space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
             {/* Header Section */}
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
-                <div className="space-y-4">
-                    <h1 className="text-5xl font-black text-gray-900 leading-[1.1] tracking-tighter">Transaction <span className="text-indigo-600">History</span></h1>
-                    <p className="text-2xl text-gray-500 font-medium max-w-3xl">Analyze and audit your complete financial activity. Track every distribution and top-up with ultra-precision.</p>
+                <div className="space-y-1">
+                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Transaction <span className="text-indigo-600">History</span></h1>
+                    <p className="text-lg text-gray-500 font-medium max-w-3xl">Analyze and audit your complete financial activity. Track every distribution and top-up with precision.</p>
                 </div>
                 <div className="flex items-center space-x-4">
                     <button
                         onClick={handleExportCSV}
                         disabled={isExporting}
-                        className="flex items-center space-x-3 px-10 py-5 bg-white border-2 border-gray-100 text-gray-900 font-black rounded-[2rem] hover:bg-gray-50 transition-all shadow-xl shadow-gray-100/50 hover:scale-105 active:scale-95 disabled:opacity-50"
+                        className="flex items-center space-x-2 px-6 py-3 bg-white border border-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-50 transition-all shadow-sm active:scale-95 disabled:opacity-50 text-sm"
                     >
-                        <Download className={`w-6 h-6 ${isExporting ? 'animate-bounce' : ''}`} />
-                        <span className="text-lg uppercase tracking-widest">{isExporting ? 'Exporting...' : 'Export CSV'}</span>
+                        <Download className={`w-5 h-5 ${isExporting ? 'animate-bounce' : ''}`} />
+                        <span className="uppercase tracking-widest">{isExporting ? 'Exporting...' : 'Export CSV'}</span>
                     </button>
                 </div>
             </div>
@@ -117,22 +117,22 @@ const TransactionHistoryPage = () => {
             {/* Advanced Filters Bar */}
             <div className="bg-white/80 backdrop-blur-xl rounded-[3rem] border border-gray-100 p-6 shadow-2xl shadow-indigo-100/20 flex flex-col md:flex-row gap-6 sticky top-28 z-20">
                 <div className="flex-1 relative group">
-                    <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-7 h-7 text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
                     <input
                         type="text"
                         placeholder="Search by ID, method or recipient..."
                         value={searchTerm}
                         onChange={handleSearch}
-                        className="w-full pl-18 pr-8 py-6 bg-gray-50/50 rounded-[2.5rem] font-black text-xl text-gray-900 outline-none focus:ring-4 ring-indigo-500/10 transition-all border-2 border-transparent focus:border-indigo-100 placeholder:text-gray-300"
+                        className="w-full pl-14 pr-6 py-4 bg-gray-50/50 rounded-[1.5rem] font-bold text-sm text-gray-900 outline-none focus:ring-4 ring-indigo-500/10 transition-all border-2 border-transparent focus:border-indigo-100 placeholder:text-gray-300 shadow-sm"
                     />
                 </div>
                 <div className="flex gap-4">
-                    <div className="relative flex items-center bg-gray-50/50 rounded-[2.5rem] p-2 border-2 border-transparent focus-within:border-indigo-100 transition-all">
-                        <Filter className="w-6 h-6 ml-5 text-gray-400" />
+                    <div className="relative flex items-center bg-gray-50/50 rounded-[1.5rem] p-1 border-2 border-transparent focus-within:border-indigo-100 transition-all">
+                        <Filter className="w-5 h-5 ml-4 text-gray-400" />
                         <select
                             value={filterType}
                             onChange={(e) => handleFilterChange(e.target.value)}
-                            className="bg-transparent pl-4 pr-10 py-4 font-black text-lg text-gray-900 outline-none appearance-none cursor-pointer"
+                            className="bg-transparent pl-3 pr-8 py-3 font-bold text-sm text-gray-900 outline-none appearance-none cursor-pointer"
                         >
                             <option value="ALL">All Types</option>
                             <option value="DEBIT">Distributions</option>
@@ -147,12 +147,12 @@ const TransactionHistoryPage = () => {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-50/80 border-b-2 border-gray-100">
-                                <th className="w-[35%] px-8 py-10 text-[22px] font-medium text-gray-400 uppercase tracking-widest">Transaction & Timing</th>
-                                <th className="w-[30%] px-8 py-10 text-[22px] font-medium text-gray-400 uppercase tracking-widest">Details & Reference</th>
-                                <th className="w-[12.5%] px-8 py-10 text-[22px] font-medium text-gray-400 uppercase tracking-widest text-center">Batch Size</th>
-                                <th className="w-[12.5%] px-8 py-10 text-[22px] font-medium text-gray-400 uppercase tracking-widest text-center">Status</th>
-                                <th className="w-[10%] px-8 py-10 text-[22px] font-medium text-gray-400 uppercase tracking-widest text-right">Value</th>
+                            <tr className="bg-gray-50/80 border-b border-gray-100">
+                                <th className="px-8 py-6 text-sm font-black text-gray-400 uppercase tracking-widest">Transaction & Timing</th>
+                                <th className="px-8 py-6 text-sm font-black text-gray-400 uppercase tracking-widest">Details & Reference</th>
+                                <th className="px-8 py-6 text-sm font-black text-gray-400 uppercase tracking-widest text-center">Batch Size</th>
+                                <th className="px-8 py-6 text-sm font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
+                                <th className="px-8 py-6 text-sm font-black text-gray-400 uppercase tracking-widest text-right">Value</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -192,47 +192,46 @@ const TransactionHistoryPage = () => {
                                                     {tx.type === 'CREDIT' ? <ArrowDownLeft className="w-6 h-6 stroke-[3px]" /> : <ArrowUpRight className="w-6 h-6 stroke-[3px]" />}
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <div className="flex items-center space-x-3 mb-1">
-                                                        <p className="font-black text-gray-900 text-[22px] leading-none truncate">{tx.type === 'CREDIT' ? 'Wallet Top-up' : 'Bulk Distribution'}</p>
-                                                        <Eye className="w-5 h-5 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    <div className="flex items-center space-x-2 mb-0.5">
+                                                        <p className="font-black text-gray-900 text-xl leading-none truncate">{tx.type === 'CREDIT' ? 'Wallet Top-up' : 'Bulk Distribution'}</p>
+                                                        <Eye className="w-4 h-4 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     </div>
-                                                    <p className="text-gray-400 font-medium uppercase tracking-wider text-lg flex items-center">
-                                                        <Calendar className="w-4 h-4 mr-2" />
-                                                        {new Date(tx.createdAt).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                    <p className="text-gray-400 font-bold uppercase tracking-wider text-sm flex items-center">
+                                                        <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                                                        {new Date(tx.createdAt).toLocaleDateString()}
                                                     </p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="space-y-1.5">
-                                                <p className="text-[22px] font-black text-gray-800 leading-none capitalize">
+                                                <p className="text-xl font-black text-gray-800 leading-none">
                                                     {tx.paymentMethod || 'Wallet Balance'}
                                                 </p>
-                                                <p className="text-lg font-mono text-gray-400 font-medium uppercase tracking-tight">
+                                                <p className="text-base font-bold text-gray-400 uppercase tracking-tight">
                                                     {tx.id}
                                                 </p>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 text-center">
                                             {tx.recipientsCount > 0 ? (
-                                                <span className="inline-flex items-center px-6 py-2 bg-indigo-50 text-indigo-600 rounded-full font-black text-lg uppercase tracking-widest border border-indigo-100/50 whitespace-nowrap">
+                                                <span className="inline-flex items-center px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl font-black text-sm uppercase tracking-widest border border-indigo-100/50 whitespace-nowrap">
                                                     {tx.recipientsCount} recipients
                                                 </span>
                                             ) : (
-                                                <span className="text-gray-300 font-black text-lg">—</span>
+                                                <span className="text-gray-300 font-black text-sm">—</span>
                                             )}
                                         </td>
                                         <td className="px-8 py-6 text-center">
-                                            <span className={`inline-flex items-center px-6 py-2 rounded-full font-black text-lg uppercase tracking-widest border ${tx.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' :
-                                                tx.status === 'FAILED' ? 'bg-rose-50 text-rose-600 border-rose-100/50' : 'bg-amber-50 text-amber-700 border-amber-100/50'
+                                            <span className={`inline-flex items-center px-4 py-1.5 rounded-xl font-black text-sm uppercase tracking-wider ${tx.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600' :
+                                                tx.status === 'FAILED' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-700'
                                                 } whitespace-nowrap`}>
-                                                <div className={`w-2 h-2 rounded-full mr-3 ${tx.status === 'COMPLETED' ? 'bg-emerald-500' : tx.status === 'FAILED' ? 'bg-rose-500' : 'bg-amber-500'}`} />
                                                 {tx.status}
                                             </span>
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            <div className={`text-2xl font-black font-mono tracking-tighter ${tx.type === 'CREDIT' ? 'text-emerald-600' : 'text-gray-900'}`}>
-                                                {tx.type === 'CREDIT' ? '+' : '-'}${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                            <div className={`text-xl font-black tracking-tight ${tx.type === 'CREDIT' ? 'text-emerald-600' : 'text-gray-900'}`}>
+                                                {tx.type === 'CREDIT' ? '+' : '-'}${tx.amount.toLocaleString()}
                                             </div>
                                         </td>
                                     </tr>
@@ -246,28 +245,27 @@ const TransactionHistoryPage = () => {
                 {!loading && transactions.length > 0 && (
                     <div className="px-12 py-12 bg-gray-50/80 border-t-2 border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-8">
                         <div className="space-y-1">
-                            <p className="text-xl font-black text-gray-900">
+                            <p className="text-sm font-black text-gray-400 uppercase tracking-widest">
                                 Page <span className="text-indigo-600">{page}</span> of <span className="text-indigo-600">{totalPages}</span>
                             </p>
-                            <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Showing {transactions.length} transactions in this view</p>
                         </div>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-3">
                             <button
                                 onClick={() => { window.scrollTo({ top: 300, behavior: 'smooth' }); setPage(p => Math.max(1, p - 1)); }}
                                 disabled={page === 1}
-                                className="p-6 bg-white border-2 border-gray-100 rounded-[2rem] text-gray-600 hover:text-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xl shadow-gray-200/50 hover:scale-110 active:scale-90"
+                                className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-500 hover:text-indigo-600 disabled:opacity-30 transition-all shadow-sm active:scale-95"
                             >
-                                <ChevronLeft className="w-10 h-10" />
+                                <ChevronLeft className="w-5 h-5" />
                             </button>
-                            <div className="w-16 h-16 flex items-center justify-center font-black text-2xl text-indigo-600 bg-white border-2 border-indigo-100 rounded-full shadow-inner">
+                            <div className="w-10 h-10 flex items-center justify-center font-black text-sm text-indigo-600 bg-white border border-indigo-100 rounded-2xl shadow-sm">
                                 {page}
                             </div>
                             <button
                                 onClick={() => { window.scrollTo({ top: 300, behavior: 'smooth' }); setPage(p => Math.min(totalPages, p + 1)); }}
                                 disabled={page === totalPages}
-                                className="p-6 bg-white border-2 border-gray-100 rounded-[2rem] text-gray-600 hover:text-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-xl shadow-gray-200/50 hover:scale-110 active:scale-90"
+                                className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-500 hover:text-indigo-600 disabled:opacity-30 transition-all shadow-sm active:scale-95"
                             >
-                                <ChevronRight className="w-10 h-10" />
+                                <ChevronRight className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
