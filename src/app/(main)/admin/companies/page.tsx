@@ -141,7 +141,7 @@ const AdminCompanies: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black text-gray-900 tracking-tight">Registered Companies</h2>
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Registered Companies</h2>
           <p className="text-gray-500 text-lg font-medium">Review, approve, and manage company accounts.</p>
         </div>
         <div className="flex items-center space-x-3">
@@ -209,8 +209,8 @@ const AdminCompanies: React.FC = () => {
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className={`flex items-center space-x-2 px-5 py-3.5 rounded-[1.5rem] font-bold text-sm transition-all border ${statusFilter !== 'ALL' || isFilterOpen
-                  ? 'bg-indigo-50 border-indigo-200 text-indigo-600'
-                  : 'bg-gray-50 border-transparent hover:border-gray-200 text-gray-500'
+                ? 'bg-indigo-50 border-indigo-200 text-indigo-600'
+                : 'bg-gray-50 border-transparent hover:border-gray-200 text-gray-500'
                 }`}
             >
               <Filter className="w-4 h-4" />
@@ -232,8 +232,8 @@ const AdminCompanies: React.FC = () => {
                       setIsFilterOpen(false);
                     }}
                     className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${statusFilter === status
-                        ? 'bg-indigo-600 text-white'
-                        : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
                       }`}
                   >
                     {status === 'ALL' ? 'All Companies' : status.charAt(0) + status.slice(1).toLowerCase()}
