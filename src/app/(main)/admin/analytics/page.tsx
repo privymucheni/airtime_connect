@@ -97,8 +97,8 @@ const AdminRevenue: React.FC = () => {
         <div className="space-y-8 animate-in fade-in duration-700">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Revenue Analytics</h2>
-                    <p className="text-gray-500 font-medium">Deep dive into platform earnings and transactional volume.</p>
+                    <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Revenue Analytics</h2>
+                    <p className="text-lg text-gray-500 font-medium">Deep dive into platform earnings and transactional volume.</p>
                 </div>
                 <div className="flex items-center space-x-3">
                     <button
@@ -109,9 +109,10 @@ const AdminRevenue: React.FC = () => {
                     </button>
                     <button
                         onClick={downloadPDF}
-                        className="flex items-center space-x-2 px-6 py-3 bg-gray-900 text-white rounded-2xl hover:bg-black font-black text-sm shadow-xl transition-all transform hover:-translate-y-0.5 active:scale-95"
+                        disabled={!data}
+                        className="flex items-center space-x-3 px-8 py-5 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl hover:bg-gray-50 font-black shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 text-lg disabled:opacity-50"
                     >
-                        <Download className="w-5 h-5" />
+                        <Download className="w-6 h-6 stroke-[3px] text-indigo-600" />
                         <span>Download PDF Report</span>
                     </button>
                 </div>
@@ -128,8 +129,8 @@ const AdminRevenue: React.FC = () => {
                             Stable
                         </div>
                     </div>
-                    <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Gross Platform Profit</p>
-                    <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">
+                    <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Gross Platform Profit</p>
+                    <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">
                         ${(data?.totalProfit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </p>
                 </div>
@@ -144,8 +145,8 @@ const AdminRevenue: React.FC = () => {
                             Live
                         </div>
                     </div>
-                    <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Total Funded Volume</p>
-                    <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">
+                    <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Total Funded Volume</p>
+                    <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">
                         ${(data?.totalVolume || 0).toLocaleString()}
                     </p>
                 </div>
@@ -159,8 +160,8 @@ const AdminRevenue: React.FC = () => {
                             Average
                         </div>
                     </div>
-                    <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Avg. Profit Margin</p>
-                    <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">
+                    <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Avg. Profit Margin</p>
+                    <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">
                         {data?.avgMargin}%
                     </p>
                 </div>
@@ -182,11 +183,11 @@ const AdminRevenue: React.FC = () => {
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 700 }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 700 }} />
+                                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#4b5563', fontSize: 13, fontWeight: 900 }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#4b5563', fontSize: 13, fontWeight: 900 }} />
                                 <Tooltip
                                     contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', padding: '16px' }}
-                                    itemStyle={{ fontWeight: 800, fontSize: '12px' }}
+                                    itemStyle={{ fontWeight: 900, fontSize: '14px' }}
                                 />
                                 <Area type="monotone" dataKey="revenue" name="Net Margin ($)" stroke="#6366f1" strokeWidth={5} fillOpacity={1} fill="url(#colorRev)" />
                             </AreaChart>
@@ -203,38 +204,42 @@ const AdminRevenue: React.FC = () => {
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={data?.chartData}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 700 }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 700 }} />
+                                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#4b5563', fontSize: 13, fontWeight: 900 }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#4b5563', fontSize: 13, fontWeight: 900 }} />
                                 <Tooltip
-                                    cursor={{ fill: '#f8fafc', radius: 12 }}
+                                    cursor={{ fill: '#f1f5f9', radius: 12 }}
                                     contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', padding: '16px' }}
-                                    itemStyle={{ fontWeight: 800, fontSize: '12px' }}
+                                    itemStyle={{ fontWeight: 900, fontSize: '14px' }}
                                 />
-                                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontWeight: 700, fontSize: '12px' }} />
-                                <Bar dataKey="airtime" name="Volume ($)" fill="#e2e8f0" radius={[10, 10, 0, 0]} barSize={40} />
-                                <Bar dataKey="margin" name="Margin ($)" fill="#6366f1" radius={[10, 10, 0, 0]} barSize={40} />
+                                <Legend
+                                    iconType="circle"
+                                    wrapperStyle={{ paddingTop: '30px', fontWeight: 900, fontSize: '15px' }}
+                                    formatter={(value) => <span style={{ color: '#111827' }}>{value}</span>}
+                                />
+                                <Bar dataKey="airtime" name="Volume ($)" fill="#1e293b" radius={[10, 10, 0, 0]} barSize={45} />
+                                <Bar dataKey="margin" name="Margin ($)" fill="#4f46e5" radius={[10, 10, 0, 0]} barSize={45} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-white rounded-[3rem] p-12 text-gray-900 border border-gray-100 shadow-sm overflow-hidden relative">
+            <div className="bg-white rounded-[2.5rem] p-10 text-gray-900 border border-gray-100 shadow-sm overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 blur-[100px] -mr-48 -mt-48 rounded-full"></div>
                 <div className="relative z-10">
-                    <h3 className="text-4xl font-black mb-4">Platform Performance Insight</h3>
-                    <p className="text-xl text-gray-500 w-full leading-relaxed">
+                    <h3 className="text-3xl font-black mb-3">Platform Performance Insight</h3>
+                    <p className="text-lg text-gray-500 w-full leading-relaxed">
                         Based on the current trajectory, the platform is seeing a consistent <span className="text-indigo-600 font-black">1.5% profit margin</span> across all airtime distributions. Transactional volume has normalised over the last 6 months with healthy growth in enterprise onboardings.
                     </p>
-                    <div className="flex items-center space-x-6 mt-10">
+                    <div className="flex items-center space-x-6 mt-8">
                         <div className="flex flex-col">
-                            <span className="text-xs font-black text-indigo-600 uppercase tracking-widest mb-1 text-opacity-70">Efficiency Rate</span>
-                            <span className="text-3xl font-black">98.4%</span>
+                            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1 text-opacity-70">Efficiency Rate</span>
+                            <span className="text-2xl font-black">98.4%</span>
                         </div>
-                        <div className="h-10 w-px bg-gray-200"></div>
+                        <div className="h-8 w-px bg-gray-200"></div>
                         <div className="flex flex-col">
-                            <span className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-1 text-opacity-70">Tx Success</span>
-                            <span className="text-3xl font-black">99.9%</span>
+                            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1 text-opacity-70">Uptime Score</span>
+                            <span className="text-2xl font-black">99.9%</span>
                         </div>
                     </div>
                 </div>
