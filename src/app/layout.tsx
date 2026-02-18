@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AirTimeConnect - Bulk Airtime Distribution Portal",
+  title: "AirFlow - Bulk Airtime Distribution Portal",
   description: "The premier bulk airtime automation platform for companies and administrators.",
 };
 
