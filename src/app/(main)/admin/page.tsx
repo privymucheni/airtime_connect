@@ -180,18 +180,18 @@ const AdminDashboard: React.FC = () => {
     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black text-gray-900 tracking-tight">Platform Intelligence</h2>
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Platform Intelligence</h2>
           <p className="text-gray-500 font-medium text-lg">Real-time oversight of system health and enterprise activity.</p>
         </div>
 
         <div className="relative">
           <button
             onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-            className="flex items-center space-x-2 px-6 py-3 bg-gray-900 text-white font-black text-sm rounded-[1.25rem] hover:bg-black transition-all shadow-xl active:scale-95 group"
+            className="flex items-center space-x-3 px-8 py-5 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl hover:bg-gray-50 font-black shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 text-lg group"
           >
-            <Download className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
+            <Download className="w-6 h-6 stroke-[3px] text-indigo-600 group-hover:translate-y-0.5 transition-transform" />
             <span>Generate Reports</span>
-            <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isExportDropdownOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExportDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isExportDropdownOpen && (
@@ -220,9 +220,9 @@ const AdminDashboard: React.FC = () => {
           <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl w-fit mb-4">
             <Building2 className="w-6 h-6" />
           </div>
-          <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Total Companies</p>
-          <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">{data?.stats?.companies || 0}</p>
-          <div className="mt-2 flex items-center text-xs font-bold text-green-600">
+          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Total Companies</p>
+          <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">{data?.stats?.companies || 0}</p>
+          <div className="mt-2 flex items-center text-[10px] font-medium text-green-600">
             <TrendingUp className="w-3 h-3 mr-1" />
             Live tracking
           </div>
@@ -232,9 +232,9 @@ const AdminDashboard: React.FC = () => {
           <div className="p-3 bg-green-50 text-green-600 rounded-2xl w-fit mb-4">
             <Activity className="w-6 h-6" />
           </div>
-          <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Total Funded Volume</p>
-          <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">${(data?.stats?.volume || 0).toLocaleString()}</p>
-          <div className="mt-2 flex items-center text-xs font-bold text-green-600">
+          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Total Funded Volume</p>
+          <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">${(data?.stats?.volume || 0).toLocaleString()}</p>
+          <div className="mt-2 flex items-center text-[10px] font-medium text-green-600">
             <TrendingUp className="w-3 h-3 mr-1" />
             +18.5%
           </div>
@@ -244,9 +244,9 @@ const AdminDashboard: React.FC = () => {
           <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl w-fit mb-4">
             <BarChart3 className="w-6 h-6" />
           </div>
-          <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Active Promo Codes</p>
-          <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">{data?.stats?.promos || 0}</p>
-          <div className="mt-2 flex items-center text-xs font-bold text-blue-600">
+          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Active Promo Codes</p>
+          <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">{data?.stats?.promos || 0}</p>
+          <div className="mt-2 flex items-center text-[10px] font-medium text-blue-600">
             Running campaigns
           </div>
         </div>
@@ -255,9 +255,9 @@ const AdminDashboard: React.FC = () => {
           <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl w-fit mb-4">
             <Users className="w-6 h-6" />
           </div>
-          <p className="text-xs text-gray-400 font-black uppercase tracking-[0.2em] mb-1">System Users</p>
-          <p className="text-5xl font-black text-gray-900 mt-2 tracking-tight">{(data?.stats?.companies || 0) + 1}</p>
-          <div className="mt-2 flex items-center text-xs font-bold text-indigo-600">
+          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">System Users</p>
+          <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">{(data?.stats?.companies || 0) + 1}</p>
+          <div className="mt-2 flex items-center text-[10px] font-medium text-indigo-600">
             Admin included
           </div>
         </div>
