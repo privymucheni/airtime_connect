@@ -69,11 +69,11 @@ const AdminSystemLogs: React.FC = () => {
         <div className="w-full space-y-8 animate-in fade-in duration-700">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h2 className="text-3xl font-black text-gray-900 tracking-tight flex items-center">
+                    <h2 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center">
                         <Activity className="w-8 h-8 mr-3 text-indigo-600" />
                         System Audit Trail
                     </h2>
-                    <p className="text-gray-500 font-bold text-xl mt-1">Real-time oversight of all administrative and financial operations.</p>
+                    <p className="text-lg text-gray-500 font-medium mt-1">Real-time oversight of all administrative and financial operations.</p>
                 </div>
                 <div className="flex items-center space-x-3">
                     <button
@@ -83,8 +83,8 @@ const AdminSystemLogs: React.FC = () => {
                     >
                         <RefreshCcw className={`w-5 h-5 group-active:rotate-180 transition-transform duration-500 ${isLoading ? 'animate-spin' : ''}`} />
                     </button>
-                    <button className="flex items-center space-x-2 px-6 py-3 bg-gray-900 text-white rounded-2xl hover:bg-black font-black text-sm shadow-xl transition-all transform hover:-translate-y-0.5 active:scale-95">
-                        <Download className="w-5 h-5" />
+                    <button className="flex items-center space-x-3 px-8 py-5 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl hover:bg-gray-50 font-black shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 text-lg">
+                        <Download className="w-6 h-6 stroke-[3px] text-indigo-600" />
                         <span>Export Audit Data</span>
                     </button>
                 </div>
@@ -102,8 +102,8 @@ const AdminSystemLogs: React.FC = () => {
                             className="w-full pl-12 pr-6 py-3.5 bg-white border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 rounded-2xl outline-none text-sm transition-all font-medium"
                         />
                     </div>
-                    <div className="hidden md:flex items-center space-x-2 text-[10px] font-black text-gray-400 uppercase tracking-widest px-4">
-                        <Clock className="w-4 h-4" />
+                    <div className="hidden md:flex items-center space-x-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 bg-gray-50/50 py-2 rounded-lg border border-gray-100/50">
+                        <Clock className="w-4 h-4 text-indigo-500" />
                         <span>Live Sync Enabled</span>
                     </div>
                 </div>
@@ -132,16 +132,16 @@ const AdminSystemLogs: React.FC = () => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between mb-2">
-                                            <p className="text-lg font-black text-gray-900 leading-snug pr-8 tracking-tight">
+                                            <p className="text-lg font-medium text-gray-900 leading-snug pr-8 tracking-tight">
                                                 {log.message}
                                             </p>
-                                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest bg-gray-100 px-4 py-1.5 rounded-full whitespace-nowrap">
+                                            <span className="text-[10px] font-medium text-gray-600 bg-gray-100/80 px-3 py-1.5 rounded-full uppercase tracking-wider whitespace-nowrap border border-gray-200/50">
                                                 {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
                                             </span>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-4">
-                                            <div className="flex items-center text-sm font-bold text-gray-500 bg-white border border-gray-100 px-4 py-2 rounded-xl shadow-sm">
-                                                <User className="w-4 h-4 mr-2 text-indigo-400" />
+                                            <div className="flex items-center text-xs font-medium text-gray-500 bg-white border border-gray-100 px-3 py-1.5 rounded-lg shadow-sm">
+                                                <User className="w-3.5 h-3.5 mr-2 text-indigo-400" />
                                                 <span>{log.user?.companyName || log.user?.name || 'System Action'}</span>
                                             </div>
                                             <div className="flex items-center text-xs font-black text-indigo-600 bg-indigo-50 px-4 py-2 rounded-xl uppercase tracking-widest">
