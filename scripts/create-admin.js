@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 async function main() {
     const name = process.argv[2] || 'System Admin';
-    const email = process.argv[3] || 'admin@airtimeconnect.com';
+    const email = process.argv[3] || 'admin@airflow.com';
     const password = process.argv[4] || 'Admin@123';
 
     console.log(`Creating admin: ${name} (${email})...`);
