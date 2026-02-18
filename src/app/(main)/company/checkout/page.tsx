@@ -128,11 +128,11 @@ const CheckoutPage = () => {
         return (
             <div className="max-w-xl mx-auto py-12 px-4 text-center">
                 <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100 flex flex-col items-center">
-                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
-                        <CheckCircle2 className="w-12 h-12 text-green-600 animate-bounce" />
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                        <CheckCircle2 className="w-8 h-8 text-green-600 animate-bounce" />
                     </div>
-                    <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Top-up Successful!</h1>
-                    <p className="text-gray-500 mb-8 text-lg">Your wallet has been credited with <span className="text-indigo-600 font-bold">${finalCredit.toLocaleString()}</span></p>
+                    <h1 className="text-2xl font-black text-gray-900 mb-2">Top-up Successful!</h1>
+                    <p className="text-gray-500 mb-8 text-base">Your wallet has been credited with <span className="text-indigo-600 font-bold">${finalCredit.toLocaleString()}</span></p>
 
                     <div className="w-full bg-gray-50 rounded-xl p-6 mb-8 text-left space-y-3">
                         <div className="flex justify-between text-sm">
@@ -151,7 +151,7 @@ const CheckoutPage = () => {
 
                     <button
                         onClick={() => router.push('/company')}
-                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-100"
+                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl transition-all shadow-xl shadow-indigo-100 text-sm uppercase tracking-widest"
                     >
                         Back to Dashboard
                     </button>
@@ -179,8 +179,8 @@ const CheckoutPage = () => {
                         <div className="w-24 h-24 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
                         <ShieldCheck className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-indigo-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">Securely processing payment...</h2>
-                    <p className="text-gray-500">Please do not refresh the page or click back.</p>
+                    <h2 className="text-xl font-bold text-gray-900">Securely processing payment...</h2>
+                    <p className="text-sm text-gray-500 font-medium">Please do not refresh the page or click back.</p>
                 </div>
             </div>
         );
@@ -190,9 +190,9 @@ const CheckoutPage = () => {
         <div className="max-w-7xl mx-auto px-6 py-12">
             <button
                 onClick={() => router.back()}
-                className="flex items-center text-gray-500 hover:text-indigo-600 font-black text-lg mb-12 transition-colors group"
+                className="flex items-center text-gray-400 hover:text-indigo-600 font-black text-sm mb-8 transition-colors group uppercase tracking-widest"
             >
-                <ArrowLeft className="w-5 h-5 mr-3 group-hover:-translate-x-1 transition-transform" />
+                <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
                 Back
             </button>
 
@@ -200,34 +200,34 @@ const CheckoutPage = () => {
                 {/* Left Column: Details & Methods */}
                 <div className="lg:col-span-2 space-y-12">
                     <section>
-                        <h1 className="text-6xl font-black text-gray-900 mb-4 leading-tight">Checkout</h1>
-                        <p className="text-xl text-gray-500 font-medium">Select your preferred top-up method or subscription plan.</p>
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">Checkout</h1>
+                        <p className="text-lg text-gray-500 font-medium">Select your preferred top-up method or subscription plan.</p>
                     </section>
 
-                    <div className="flex p-1.5 bg-gray-100 rounded-2xl w-fit">
+                    <div className="flex p-1 bg-gray-100 rounded-2xl w-fit">
                         <button
                             onClick={() => setMode('topup')}
-                            className={`px-8 py-3.5 rounded-xl font-black text-lg transition-all ${mode === 'topup' ? 'bg-white text-indigo-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-6 py-2.5 rounded-xl font-black text-sm transition-all ${mode === 'topup' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Quick Top-up
                         </button>
                         <button
                             onClick={() => setMode('subscription')}
-                            className={`px-8 py-3.5 rounded-xl font-black text-lg transition-all ${mode === 'subscription' ? 'bg-white text-indigo-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-6 py-2.5 rounded-xl font-black text-sm transition-all ${mode === 'subscription' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Monthly Subscription
                         </button>
                     </div>
 
                     {mode === 'topup' ? (
-                        <section className="bg-white rounded-3xl p-10 border border-gray-100 shadow-sm space-y-6">
-                            <h2 className="text-2xl font-black text-gray-900">Choose Amount</h2>
+                        <section className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm space-y-6">
+                            <h2 className="text-lg font-bold text-gray-900">Choose Amount</h2>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 {[500, 1000, 2500, 5000].map((val) => (
                                     <button
                                         key={val}
                                         onClick={() => setAmount(val)}
-                                        className={`py-5 rounded-2xl font-black text-xl transition-all border-2 ${amount === val
+                                        className={`py-4 rounded-xl font-black text-lg transition-all border-2 ${amount === val
                                             ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100 scale-105'
                                             : 'bg-white border-gray-100 text-gray-700 hover:border-indigo-100'
                                             }`}
@@ -237,12 +237,12 @@ const CheckoutPage = () => {
                                 ))}
                             </div>
                             <div className="relative">
-                                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-300">$</span>
+                                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-xl font-bold text-gray-300">$</span>
                                 <input
                                     type="number"
                                     value={amount}
                                     onChange={(e) => setAmount(Number(e.target.value))}
-                                    className="w-full pl-14 pr-8 py-5 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl font-black text-3xl outline-none transition-all"
+                                    className="w-full pl-12 pr-6 py-4 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-black text-2xl outline-none transition-all placeholder:text-gray-300"
                                     placeholder="Enter custom amount"
                                 />
                             </div>
@@ -261,12 +261,12 @@ const CheckoutPage = () => {
                                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${selectedPlan?.id === plan.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
                                         <Zap className="w-7 h-7" />
                                     </div>
-                                    <h3 className="font-black text-2xl text-gray-900 mb-2">{plan.name}</h3>
-                                    <p className="text-4xl font-black text-indigo-600 mb-6">${plan.price}<span className="text-sm text-gray-400 font-bold uppercase tracking-widest leading-none ml-1">/mo</span></p>
-                                    <ul className="space-y-3 mb-8">
+                                    <h3 className="font-bold text-lg text-gray-900 mb-1">{plan.name}</h3>
+                                    <p className="text-2xl font-black text-indigo-600 mb-6">${plan.price}<span className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-none ml-1">/mo</span></p>
+                                    <ul className="space-y-2 mb-8">
                                         {plan.features.map(f => (
-                                            <li key={f} className="text-base font-bold text-gray-500 flex items-center">
-                                                <CheckCircle2 className="w-5 h-5 mr-3 text-green-500 flex-shrink-0" />
+                                            <li key={f} className="text-sm font-bold text-gray-500 flex items-center">
+                                                <CheckCircle2 className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
                                                 {f}
                                             </li>
                                         ))}
@@ -281,8 +281,8 @@ const CheckoutPage = () => {
                         </div>
                     )}
 
-                    <section className="bg-white rounded-3xl p-10 border border-gray-100 shadow-sm">
-                        <h2 className="text-3xl font-black text-gray-900 mb-8">Payment Method</h2>
+                    <section className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm">
+                        <h2 className="text-lg font-bold text-gray-900 mb-6">Payment Method</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                             {PAYMENT_METHODS.map((method) => {
                                 const Icon = method.icon;
@@ -299,8 +299,8 @@ const CheckoutPage = () => {
                                             <Icon className="w-6 h-6" />
                                         </div>
                                         <div className="text-left">
-                                            <p className="font-black text-gray-900 text-lg leading-tight">{method.name}</p>
-                                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">{method.description}</p>
+                                            <p className="font-bold text-gray-900 text-sm leading-tight">{method.name}</p>
+                                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-0.5">{method.description}</p>
                                         </div>
                                         {selectedMethod === method.id && (
                                             <div className="ml-auto bg-indigo-600 rounded-full p-1.5 shadow-xl shadow-indigo-100">
@@ -323,7 +323,7 @@ const CheckoutPage = () => {
                                             <input
                                                 type="text"
                                                 placeholder="0000 0000 0000 0000"
-                                                className="w-full px-5 py-4 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-bold text-lg outline-none transition-all"
+                                                className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-bold text-sm outline-none transition-all"
                                                 value={cardData.number}
                                                 onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
                                             />
@@ -334,7 +334,7 @@ const CheckoutPage = () => {
                                                 <input
                                                     type="text"
                                                     placeholder="MM/YY"
-                                                    className="w-full px-5 py-4 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-bold text-lg outline-none transition-all"
+                                                    className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-bold text-sm outline-none transition-all"
                                                     value={cardData.expiry}
                                                     onChange={(e) => setCardData({ ...cardData, expiry: e.target.value })}
                                                 />
@@ -344,7 +344,7 @@ const CheckoutPage = () => {
                                                 <input
                                                     type="password"
                                                     placeholder="123"
-                                                    className="w-full px-5 py-4 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-bold text-lg outline-none transition-all"
+                                                    className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-bold text-sm outline-none transition-all"
                                                     value={cardData.cvv}
                                                     onChange={(e) => setCardData({ ...cardData, cvv: e.target.value })}
                                                 />
@@ -360,7 +360,7 @@ const CheckoutPage = () => {
                                         <input
                                             type="text"
                                             placeholder="0770 000 000"
-                                            className="w-full px-5 py-4 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-bold text-lg outline-none transition-all"
+                                            className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-bold text-sm outline-none transition-all"
                                             value={ecoCashNumber}
                                             onChange={(e) => setEcoCashNumber(e.target.value)}
                                         />
@@ -374,8 +374,8 @@ const CheckoutPage = () => {
                 {/* Right Column: Summary */}
                 <div className="lg:col-span-1">
                     <div className="sticky top-12 space-y-8">
-                        <section className="bg-white rounded-3xl p-8 border border-gray-100 shadow-2xl border-t-8 border-t-indigo-600">
-                            <h2 className="text-2xl font-black text-gray-900 mb-6">Order Summary</h2>
+                        <section className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-2xl border-t-8 border-t-indigo-600">
+                            <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
 
                             <div className="space-y-4 mb-8">
                                 <div className="flex justify-between items-center text-sm">
@@ -383,18 +383,18 @@ const CheckoutPage = () => {
                                     <span className="text-gray-900 font-black text-sm uppercase">{mode === 'topup' ? 'Balance Reload' : (selectedPlan?.name || 'Select Plan')}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-gray-500 font-black text-sm">Subtotal</span>
-                                    <span className="text-gray-900 font-black font-mono text-xl">${finalPrice.toLocaleString()}</span>
+                                    <span className="text-gray-500 font-bold text-xs uppercase tracking-widest">Subtotal</span>
+                                    <span className="text-gray-900 font-black text-xl tracking-tight">${finalPrice.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-gray-500 font-black text-sm">Extra Bonus</span>
-                                    <span className="text-green-600 font-black font-mono text-xl">
+                                    <span className="text-gray-500 font-bold text-xs uppercase tracking-widest">Bonus</span>
+                                    <span className="text-green-600 font-black text-xl tracking-tight">
                                         +${(finalCredit - finalPrice).toLocaleString()}
                                     </span>
                                 </div>
                                 <div className="pt-6 border-t border-gray-100 flex justify-between items-end">
-                                    <span className="text-gray-900 font-black uppercase tracking-tighter text-lg mb-1">Total Credit</span>
-                                    <span className="text-4xl font-black text-indigo-600 font-mono leading-none">${finalCredit.toLocaleString()}</span>
+                                    <span className="text-gray-900 font-black uppercase tracking-widest text-xs mb-1">Total Credit</span>
+                                    <span className="text-3xl font-black text-indigo-600 leading-none tracking-tight">${finalCredit.toLocaleString()}</span>
                                 </div>
                             </div>
 
@@ -405,8 +405,8 @@ const CheckoutPage = () => {
                                         type="text"
                                         value={promoCode}
                                         onChange={(e) => setPromoCode(e.target.value)}
-                                        placeholder="CODE2024"
-                                        className="flex-1 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl px-4 py-3 text-lg font-black uppercase placeholder:text-gray-300 outline-none transition-all font-mono"
+                                        placeholder="CODE"
+                                        className="flex-1 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl px-4 py-3 text-sm font-black uppercase placeholder:text-gray-300 outline-none transition-all font-mono"
                                     />
                                     <button
                                         onClick={handleApplyPromo}
@@ -417,8 +417,8 @@ const CheckoutPage = () => {
                                     </button>
                                 </div>
                                 {promoMessage && (
-                                    <p className={`text-base font-black flex items-center px-1 ${promoStatus === 'success' ? 'text-green-600' : 'text-red-500'}`}>
-                                        {promoStatus === 'success' ? <CheckCircle2 className="w-5 h-5 mr-2" /> : <AlertCircle className="w-5 h-5 mr-2" />}
+                                    <p className={`text-xs font-black flex items-center px-1 ${promoStatus === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                                        {promoStatus === 'success' ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <AlertCircle className="w-4 h-4 mr-2" />}
                                         {promoMessage}
                                     </p>
                                 )}
@@ -426,10 +426,10 @@ const CheckoutPage = () => {
 
                             <button
                                 onClick={handlePayment}
-                                className="w-full py-6 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-2xl rounded-[1.5rem] transition-all shadow-2xl shadow-indigo-100 mb-6 flex items-center justify-center group"
+                                className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg rounded-2xl transition-all shadow-xl shadow-indigo-100 mb-6 flex items-center justify-center group uppercase tracking-widest"
                             >
                                 Pay Securely
-                                <ChevronRight className="w-8 h-8 ml-2 group-hover:translate-x-2 transition-transform" />
+                                <ChevronRight className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform" />
                             </button>
 
                             <div className="flex items-center justify-center space-x-3 text-gray-400 text-xs font-black tracking-widest leading-none">
@@ -486,13 +486,13 @@ const FeedbackModal = ({ isOpen, title, message, type, onClose }: { isOpen: bool
                     <X className="w-6 h-6" />
                 </button>
                 <div className="flex flex-col items-center">
-                    <div className="mb-6">{icons[type]}</div>
-                    <h3 className="text-3xl font-black text-gray-900 mb-3">{title}</h3>
-                    <p className="text-gray-500 text-lg font-medium leading-relaxed">{message}</p>
+                    <div className="mb-4">{icons[type]}</div>
+                    <h3 className="text-2xl font-black text-gray-900 mb-2">{title}</h3>
+                    <p className="text-gray-500 text-sm font-medium leading-relaxed">{message}</p>
                 </div>
                 <button
                     onClick={onClose}
-                    className="mt-10 w-full py-5 bg-gray-900 text-white font-black text-xl rounded-2xl hover:bg-black transition-all shadow-xl shadow-gray-200"
+                    className="mt-8 w-full py-4 bg-gray-900 text-white font-black text-sm rounded-xl hover:bg-black transition-all shadow-xl shadow-gray-200 uppercase tracking-widest"
                 >
                     Dismiss
                 </button>

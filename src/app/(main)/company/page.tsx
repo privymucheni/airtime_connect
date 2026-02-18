@@ -68,22 +68,22 @@ const CompanyDashboard: React.FC = () => {
     <div className="space-y-12 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-5xl font-black text-gray-900 leading-tight tracking-tight">Welcome back, {user.name}</h2>
-          <p className="text-xl text-gray-500 font-medium mt-2">Overview of your account status and recent distribution activities.</p>
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome back, {user.name}</h2>
+          <p className="text-lg text-gray-500 font-medium mt-1">Overview of your account status and recent distribution activities.</p>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <button
             onClick={() => setIsWalletModalOpen(true)}
-            className="flex items-center space-x-3 px-8 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-100 text-lg group"
+            className="flex items-center space-x-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 font-black text-sm group"
           >
-            <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform" />
+            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
             <span>Top-up Wallet</span>
           </button>
           <Link
             href="/company/distribution"
-            className="flex items-center space-x-3 px-8 py-4 bg-white border-2 border-gray-100 text-gray-700 font-black rounded-2xl hover:bg-gray-50 transition-all text-lg"
+            className="flex items-center space-x-2 px-6 py-3 bg-white border border-gray-100 text-gray-700 rounded-2xl hover:bg-gray-50 transition-all font-black text-sm"
           >
-            <Send className="w-6 h-6" />
+            <Send className="w-5 h-5" />
             <span>New Distribution</span>
           </Link>
         </div>
@@ -92,46 +92,46 @@ const CompanyDashboard: React.FC = () => {
       {/* Main Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-6">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-              <CreditCard className="w-6 h-6 font-black" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+              <CreditCard className="w-5 h-5 font-black" />
             </div>
-            <span className="text-xs font-medium text-green-600 bg-green-50 px-3 py-1.5 rounded-lg tracking-widest uppercase">Safe</span>
+            <span className="text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg tracking-widest uppercase">Safe</span>
           </div>
-          <p className="text-sm text-gray-400 font-medium uppercase tracking-[0.2em]">Available Balance</p>
-          <p className="text-4xl font-black text-gray-900 mt-1 font-mono tracking-tighter">${balance.toLocaleString()}</p>
+          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Available Balance</p>
+          <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">${balance.toLocaleString()}</p>
         </div>
 
         <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-6">
-            <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-              <Activity className="w-6 h-6 font-black" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
+              <Activity className="w-5 h-5 font-black" />
             </div>
-            <span className="text-xs font-medium text-gray-400 bg-gray-50 px-3 py-1.5 rounded-lg tracking-widest uppercase">30 Days</span>
+            <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-2 py-1 rounded-lg tracking-widest uppercase">30 Days</span>
           </div>
-          <p className="text-sm text-gray-400 font-medium uppercase tracking-[0.2em]">Monthly Volume</p>
-          <p className="text-4xl font-black text-gray-900 mt-1 font-mono tracking-tighter">${metrics?.monthlyVolume.toLocaleString() || 0}</p>
+          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Monthly Volume</p>
+          <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">${metrics?.monthlyVolume.toLocaleString() || 0}</p>
         </div>
 
         <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-6">
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-              <ArrowDownLeft className="w-6 h-6 font-black" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+              <ArrowDownLeft className="w-5 h-5 font-black" />
             </div>
-            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg tracking-widest uppercase">All Time</span>
+            <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg tracking-widest uppercase">All Time</span>
           </div>
-          <p className="text-sm text-gray-400 font-medium uppercase tracking-[0.2em]">Total Reloads</p>
-          <p className="text-4xl font-black text-gray-900 mt-1 font-mono tracking-tighter">${metrics?.totalReloads.toLocaleString() || 0}</p>
+          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Total Reloads</p>
+          <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">${metrics?.totalReloads.toLocaleString() || 0}</p>
         </div>
 
         <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-6">
-            <div className="p-3 bg-orange-50 text-orange-600 rounded-xl">
-              <Users className="w-6 h-6 font-black" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-orange-50 text-orange-600 rounded-xl">
+              <Users className="w-5 h-5 font-black" />
             </div>
           </div>
-          <p className="text-sm text-gray-400 font-medium uppercase tracking-[0.2em]">Total Recipients</p>
-          <p className="text-4xl font-black text-gray-900 mt-1 font-mono tracking-tighter">{metrics?.totalRecipients.toLocaleString() || 0}</p>
+          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Total Recipients</p>
+          <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">{metrics?.totalRecipients.toLocaleString() || 0}</p>
         </div>
       </div>
 
@@ -139,8 +139,8 @@ const CompanyDashboard: React.FC = () => {
         <div className="lg:col-span-2 bg-white rounded-[3rem] border border-gray-100 shadow-sm p-10">
           <div className="flex items-center justify-between mb-10">
             <div className="space-y-1">
-              <h3 className="font-black text-2xl text-gray-900">Distribution Trends</h3>
-              <p className="text-base text-gray-400 font-medium tracking-tight">Real-time distribution volume for the last 7 days.</p>
+              <h3 className="font-bold text-lg text-gray-900">Distribution Trends</h3>
+              <p className="text-sm text-gray-400 font-medium tracking-tight">Real-time distribution volume for the last 7 days.</p>
             </div>
             <div className="flex items-center space-x-3 px-5 py-2.5 bg-gray-50 rounded-2xl">
               <span className="w-3 h-3 bg-indigo-600 rounded-full animate-pulse"></span>
@@ -178,8 +178,8 @@ const CompanyDashboard: React.FC = () => {
 
         <div className="w-full bg-white rounded-[3rem] border border-gray-100 shadow-sm p-10">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="font-black text-2xl text-gray-900">Quick History</h3>
-            <Link href="/company/history" className="text-indigo-600 text-sm font-black uppercase tracking-widest hover:text-indigo-700 transition-colors">View All</Link>
+            <h3 className="font-bold text-lg text-gray-900">Quick History</h3>
+            <Link href="/company/history" className="text-indigo-600 text-[10px] font-black uppercase tracking-widest hover:text-indigo-700 transition-colors">View All</Link>
           </div>
           <div className="space-y-6">
             {transactions.length === 0 ? (
@@ -196,21 +196,21 @@ const CompanyDashboard: React.FC = () => {
                 }}
                 className="flex items-center space-x-6 p-6 hover:bg-gray-50 rounded-[2.5rem] transition-all cursor-pointer group border border-transparent hover:border-gray-100"
               >
-                <div className={`p-5 rounded-2xl group-hover:scale-110 transition-transform ${tx.type === 'CREDIT' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                  {tx.type === 'CREDIT' ? <ArrowDownLeft className="w-7 h-7" /> : <ArrowUpRight className="w-7 h-7" />}
+                <div className={`p-4 rounded-2xl group-hover:scale-110 transition-transform ${tx.type === 'CREDIT' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                  {tx.type === 'CREDIT' ? <ArrowDownLeft className="w-6 h-6" /> : <ArrowUpRight className="w-6 h-6" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
                     <p className="text-xl font-black text-gray-900 truncate">
                       {tx.type === 'CREDIT' ? 'Wallet Reload' : `Bulk Distribution`}
                     </p>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Eye className="w-5 h-5 text-indigo-600" />
+                      <Eye className="w-4 h-4 text-indigo-600" />
                     </div>
                   </div>
-                  <p className="text-base text-gray-400 font-medium uppercase tracking-widest mt-0.5">{new Date(tx.createdAt).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-0.5">{new Date(tx.createdAt).toLocaleDateString()}</p>
                 </div>
-                <div className={`text-right ${tx.type === 'CREDIT' ? 'text-green-600' : 'text-gray-900'} font-black text-2xl font-mono tracking-tighter`}>
+                <div className={`text-right ${tx.type === 'CREDIT' ? 'text-green-600' : 'text-gray-900'} font-black text-xl tracking-tight`}>
                   {tx.type === 'CREDIT' ? '+' : '-'}${tx.amount.toLocaleString()}
                 </div>
               </div>
