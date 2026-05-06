@@ -85,7 +85,7 @@ const AdminDashboard: React.FC = () => {
     XLSX.utils.book_append_sheet(wb, wsStats, "Platform Overview");
     XLSX.utils.book_append_sheet(wb, wsComp, "Recent Companies");
 
-    XLSX.writeFile(wb, `AirTimeConnect_Dashboard_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, `AirFlow_Dashboard_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
     setIsExportDropdownOpen(false);
   };
 
@@ -97,7 +97,7 @@ const AdminDashboard: React.FC = () => {
     // Header
     doc.setFontSize(22);
     doc.setTextColor(99, 102, 241);
-    doc.text("AirTimeConnect Distribution Summary", 14, 22);
+    doc.text("AirFlow Distribution Summary", 14, 22);
 
     doc.setFontSize(10);
     doc.setTextColor(100);
@@ -146,7 +146,7 @@ const AdminDashboard: React.FC = () => {
       styles: { fontSize: 9 }
     });
 
-    doc.save(`AirTimeConnect_Dashboard_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`AirFlow_Dashboard_${new Date().toISOString().split('T')[0]}.pdf`);
     setIsExportDropdownOpen(false);
   };
 

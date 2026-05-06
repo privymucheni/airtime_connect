@@ -196,7 +196,7 @@ const CompanyDetailsSheet: React.FC<CompanyDetailsSheetProps> = ({
 
                     <div className="p-6 border-t border-gray-50 bg-gray-50/50">
                         <p className="text-[10px] font-bold text-gray-400 text-center uppercase tracking-widest leading-relaxed">
-                            AirTimeConnect Enterprise • Data Protection Enabled • Admin Tier
+                            AirFlow Enterprise • Data Protection Enabled • Admin Tier
                         </p>
                     </div>
                 </div>

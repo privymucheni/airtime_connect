@@ -18,6 +18,7 @@ export const authOptions: NextAuthOptions = {
             credentials: {
                 email: { label: "Email", type: "email" },
                 password: { label: "Password", type: "password" },
+                role: { label: "Role", type: "text" },
             },
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) {
@@ -31,6 +32,11 @@ export const authOptions: NextAuthOptions = {
 
                 if (!user || !user.password) {
                     throw new Error("User not found");
+                }
+
+                // Role validation
+                if (credentials.role && user.role !== credentials.role) {
+                    throw new Error(`Incompatible account type. This email is registered as an ${user.role}.`);
                 }
 
                 const isPasswordValid = await bcrypt.compare(
@@ -59,7 +65,7 @@ export const authOptions: NextAuthOptions = {
         }),
     ],
     callbacks: {
-        async jwt({ token, user, trigger, session }) {
+        async jwt({ token, user }) {
             if (user) {
                 token.role = (user as any).role;
                 token.id = user.id;
@@ -68,14 +74,21 @@ export const authOptions: NextAuthOptions = {
                 token.status = (user as any).status;
             }
 
-            // Fetch latest balance from DB if we want real-time tracking in session
-            if (trigger === "update" || !token.balance) {
-                const wallet = await prisma.wallet.findUnique({
-                    where: { userId: token.id as string }
+            // Always fetch latest status and balance from DB to ensure instant updates (suspension, top-ups)
+            try {
+                const dbUser = await prisma.user.findUnique({
+                    where: { id: token.id as string },
+                    include: { wallet: true }
                 });
-                if (wallet) {
-                    token.balance = wallet.balance;
+
+                if (dbUser) {
+                    token.status = dbUser.status;
+                    token.balance = dbUser.wallet?.balance || 0;
+                    token.role = dbUser.role; // Keep role in sync too
                 }
+            } catch (error) {
+                console.error("JWT DB Lookup Error:", error);
+                // Fallback to existing token values if DB is unreachable
             }
 
             return token;

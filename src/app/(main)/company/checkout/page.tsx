@@ -102,6 +102,16 @@ const CheckoutPage = () => {
             return;
         }
 
+        if (amount <= 0) {
+            setModal({
+                isOpen: true,
+                title: 'Invalid Amount',
+                message: 'Please enter a valid top-up amount greater than zero.',
+                type: 'error'
+            });
+            return;
+        }
+
         setIsProcessing(true);
         setStep('processing');
 
@@ -111,14 +121,14 @@ const CheckoutPage = () => {
             await topUpWallet(amount, selectedMethod, promoData?.id);
             await update();
             setStep('success');
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             setStep('details');
             setIsProcessing(false);
             setModal({
                 isOpen: true,
                 title: 'Payment Failed',
-                message: 'We could not process your payment. Please check your details and try again.',
+                message: error.message || 'We could not process your payment. Please check your details and try again.',
                 type: 'error'
             });
         }
@@ -240,6 +250,7 @@ const CheckoutPage = () => {
                                 <span className="absolute left-6 top-1/2 -translate-y-1/2 text-xl font-bold text-gray-300">$</span>
                                 <input
                                     type="number"
+                                    min="1"
                                     value={amount}
                                     onChange={(e) => setAmount(Number(e.target.value))}
                                     className="w-full pl-12 pr-6 py-4 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-black text-2xl outline-none transition-all placeholder:text-gray-300"

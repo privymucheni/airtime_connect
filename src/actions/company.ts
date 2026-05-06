@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { TransactionType, TransactionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { createLog } from "@/lib/logger";
+import { sendRecipientNotifications } from "@/lib/twilio";
 
 function generateTransactionRef() {
     const timestamp = new Date().getTime().toString().substring(1); // Remove first digit for length control
@@ -120,6 +121,16 @@ export async function distributeAirtime(data: { recipients: any[] }) {
     if (!session) throw new Error("Unauthorized");
 
     const userId = (session.user as any).id;
+    const status = (session.user as any).status;
+
+    if (status === "SUSPENDED") {
+        throw new Error("Your account is suspended. Access denied.");
+    }
+
+    if (data.recipients.some(r => r.amount <= 0)) {
+        throw new Error("Invalid Amount: All recipient amounts must be greater than zero");
+    }
+
     const totalAmount = data.recipients.reduce((sum, r) => sum + r.amount, 0);
 
     const result = await prisma.$transaction(async (tx) => {
@@ -173,6 +184,16 @@ export async function distributeAirtime(data: { recipients: any[] }) {
         userId
     });
 
+    // Send individual SMS to each recipient with their specific amount
+    const userWithCompany = await prisma.user.findUnique({ where: { id: userId } });
+    if (userWithCompany) {
+        const companyName = userWithCompany.companyName || userWithCompany.name || "Unknown Company";
+        sendRecipientNotifications(data.recipients, companyName, result.transactionId)
+            .catch((err: Error) => console.error('SMS notification error:', err));
+    }
+
+
+
     revalidatePath("/company");
     revalidatePath("/company/history");
     return result;
@@ -182,7 +203,16 @@ export async function topUpWallet(amount: number, paymentMethod: string, promoCo
     const session = await getServerSession(authOptions);
     if (!session) throw new Error("Unauthorized");
 
+    if (amount <= 0) {
+        throw new Error("Invalid Amount");
+    }
+
     const userId = (session.user as any).id;
+    const status = (session.user as any).status;
+
+    if (status === "SUSPENDED") {
+        throw new Error("Your account is suspended. Access denied.");
+    }
 
     let finalAmount = amount;
     if (promoCodeId) {

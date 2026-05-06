@@ -18,11 +18,18 @@ export default withAuth(
         }
 
         if (!isAuth) {
+            if (isAuthPage) return null;
             return NextResponse.redirect(new URL("/login", req.url));
         }
 
         // Role-based protection
         const role = token.role;
+        const status = token.status;
+
+        if (status === "SUSPENDED") {
+            return NextResponse.redirect(new URL("/login?error=account_suspended", req.url));
+        }
+
         if (req.nextUrl.pathname.startsWith("/admin") && role !== "ADMIN") {
             return NextResponse.redirect(new URL("/company", req.url));
         }

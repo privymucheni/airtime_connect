@@ -13,6 +13,7 @@ import {
     XCircle,
     Clock,
     ExternalLink,
+    Download,
 } from 'lucide-react';
 
 interface Recipient {
@@ -48,6 +49,48 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
     if (!isOpen || !transaction) return null;
 
     const isCredit = transaction.type === 'CREDIT';
+
+    const handleDownload = () => {
+        if (!transaction) return;
+
+        const lines: string[] = [];
+
+        // Transaction summary header rows
+        lines.push(`Transaction ID,${transaction.id}`);
+        lines.push(`Type,${isCredit ? 'Wallet Top-up' : 'Bulk Distribution'}`);
+        lines.push(`Amount,${isCredit ? '+' : '-'}$${transaction.amount.toFixed(2)}`);
+        lines.push(`Status,${transaction.status}`);
+        lines.push(`Payment Method,${transaction.paymentMethod || 'Wallet Balance'}`);
+        lines.push(`Date,${new Date(transaction.createdAt).toLocaleString()}`);
+        lines.push(`Recipients Count,${transaction.recipientsCount}`);
+
+        if (!isCredit && transaction.recipients && transaction.recipients.length > 0) {
+            lines.push(''); // blank separator
+            lines.push('Recipient Name,Phone Number,Amount,Status');
+            transaction.recipients.forEach((r) => {
+                lines.push(
+                    [
+                        `"${r.name || 'Unknown'}"`,
+                        r.phoneNumber,
+                        `$${r.amount.toFixed(2)}`,
+                        r.status,
+                    ].join(',')
+                );
+            });
+        }
+
+        const csvContent = lines.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `transaction_${transaction.id}_${new Date(transaction.createdAt).toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -94,8 +137,8 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                             <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Transaction Status</p>
                             <div className="flex justify-end">
                                 <span className={`inline-flex items-center px-6 py-2 rounded-xl font-black text-sm uppercase tracking-widest border ${transaction.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                        transaction.status === 'FAILED' ? 'bg-rose-50 text-rose-700 border-rose-100' :
-                                            'bg-amber-50 text-amber-700 border-amber-100'
+                                    transaction.status === 'FAILED' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                                        'bg-amber-50 text-amber-700 border-amber-100'
                                     }`}>
                                     {transaction.status === 'COMPLETED' && <CheckCircle2 className="w-4 h-4 mr-2" />}
                                     {transaction.status === 'FAILED' && <XCircle className="w-4 h-4 mr-2" />}
@@ -162,7 +205,14 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="p-8 border-t border-gray-50 bg-gray-50/30 flex justify-end">
+                <div className="p-8 border-t border-gray-50 bg-gray-50/30 flex items-center justify-between">
+                    <button
+                        onClick={handleDownload}
+                        className="flex items-center space-x-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl transition-all shadow-lg shadow-indigo-200 hover:scale-105 active:scale-95 text-sm"
+                    >
+                        <Download className="w-4 h-4" />
+                        <span className="uppercase tracking-widest">Download CSV</span>
+                    </button>
                     <button
                         onClick={onClose}
                         className="px-10 py-4 bg-white border-2 border-gray-100 text-gray-900 font-black rounded-2xl hover:bg-gray-50 transition-all shadow-xl shadow-gray-100 hover:scale-105 active:scale-95"

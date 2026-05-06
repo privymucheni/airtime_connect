@@ -1,0 +1,68 @@
+
+> airtime_connect@0.1.0 build
+> next build
+
+Gû¦ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+node.exe : GÜá The 
+"middleware" file 
+convention is deprecated. 
+Please use "proxy" instead. 
+Learn more: https://nextjs.o
+rg/docs/messages/middleware-
+to-proxy
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (GÜá T  
+  he "middle...leware-to-   
+ proxy:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+  Creating an optimized production build ...
+G£ô Compiled successfully in 9.9s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/20) ...
+  Generating static pages using 7 workers (5/20) 
+  Generating static pages using 7 workers (10/20) 
+  Generating static pages using 7 workers (15/20) 
+G£ô Generating static pages using 7 workers (20/20) in 1030.3ms
+  Finalizing page optimization ...
+
+Route (app)
+Göî Gùï /
+Gö£ Gùï /_not-found
+Gö£ Gùï /admin
+Gö£ Gùï /admin/analytics
+Gö£ Gùï /admin/chatbot
+Gö£ Gùï /admin/companies
+Gö£ Gùï /admin/logs
+Gö£ Gùï /admin/promo-codes
+Gö£ Gùï /admin/settings
+Gö£ ¦Æ /api/auth/[...nextauth]
+Gö£ Gùï /company
+Gö£ Gùï /company/checkout
+Gö£ Gùï /company/distribution
+Gö£ Gùï /company/history
+Gö£ Gùï /company/settings
+Gö£ Gùï /login
+Gö£ Gùï /register
+Gö£ Gùï /register-admin
+Göö Gùï /test-route
+
+
+¦Æ Proxy (Middleware)
+
+Gùï  (Static)   prerendered as static content
+¦Æ  (Dynamic)  server-rendered on demand
+

@@ -24,7 +24,10 @@ export const useAuth = () => {
     return {
         user,
         login: (credentials: any) => signIn('credentials', credentials),
-        logout: () => signOut({ callbackUrl: '/login' }),
+        logout: async () => {
+            await signOut({ redirect: false });
+            window.location.href = '/login';
+        },
         isLoading: status === 'loading',
         update,
     };

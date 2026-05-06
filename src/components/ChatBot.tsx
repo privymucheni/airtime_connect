@@ -11,6 +11,7 @@ import {
     User
 } from 'lucide-react';
 import { getChatQuestions } from '@/actions/chatbot';
+import { usePathname } from 'next/navigation';
 
 interface ChatQuestion {
     id: string;
@@ -34,6 +35,11 @@ export const ChatBot = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const pathname = usePathname();
+
+    if (pathname === '/company/chatbot') {
+        return null;
+    }
 
     const initChat = async () => {
         setIsLoading(true);

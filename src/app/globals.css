@@ -10,18 +10,42 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Brand Colors */
+  --color-brand-primary: #4f46e5;
+  --color-brand-secondary: #0f172a;
+
+  /* Status Colors */
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+
+  /* Brand Gradients */
+  --background-image-brand-gradient: linear-gradient(to bottom right, var(--color-brand-primary), #3b82f6);
+  --background-image-surface-gradient: linear-gradient(to bottom right, #ffffff, #f8fafc);
+
+  /* Premium Design Tokens */
+  --radius-premium: 2.5rem;
+  --radius-card: 2rem;
+  --radius-button: 1.25rem;
+
+  /* Spacing Scale Improvements */
+  --spacing-compact: 0.75rem;
+  --spacing-relaxed: 1.5rem;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #020617;
+    --foreground: #f8fafc;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
   overflow-y: scroll;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

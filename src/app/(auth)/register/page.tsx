@@ -81,7 +81,7 @@ const Register: React.FC = () => {
             Back to Sign In
           </Link>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Register Your Company</h1>
-          <p className="text-gray-500 mt-2">Join AirTimeConnect to automate your bulk distributions.</p>
+          <p className="text-gray-500 mt-2">Join AirFlow to automate your bulk distributions.</p>
         </div>
 
         {error && (
@@ -170,8 +170,9 @@ const Register: React.FC = () => {
           </div>
         </form>
 
-        <p className="mt-8 text-center text-xs text-gray-400 leading-relaxed">
-          By registering, you agree to our <a href="#" className="underline hover:text-indigo-600">Terms of Service</a> and <a href="#" className="underline hover:text-indigo-600">Privacy Policy</a>.
+        <p className="mt-8 text-center text-sm text-gray-500">
+          Don't have an account?{' '}
+          <Link href="/register" className="font-semibold text-indigo-600 hover:text-indigo-700">Register your company</Link>
         </p>
       </div>
     </div>

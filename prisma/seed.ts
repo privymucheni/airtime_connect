@@ -15,7 +15,11 @@ async function main() {
             password: adminPassword,
             role: UserRole.ADMIN,
             status: UserStatus.ACTIVE,
-            balance: 0,
+            wallet: {
+                create: {
+                    balance: 0
+                }
+            }
         },
     });
 
@@ -33,7 +37,11 @@ async function main() {
             password: companyPassword,
             role: UserRole.COMPANY,
             status: UserStatus.ACTIVE,
-            balance: 25000,
+            wallet: {
+                create: {
+                    balance: 25000
+                }
+            }
         },
     });
 

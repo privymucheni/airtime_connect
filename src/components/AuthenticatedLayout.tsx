@@ -21,6 +21,7 @@ import {
     ChevronRight
 } from 'lucide-react';
 import ProfileModal from './ProfileModal';
+import Logo from './Logo';
 
 interface AuthenticatedLayoutProps {
     children: React.ReactNode;
@@ -49,6 +50,7 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) =
         { name: 'Dashboard', icon: LayoutDashboard, path: '/company' },
         { name: 'Bulk Distribution', icon: Send, path: '/company/distribution' },
         { name: 'History', icon: History, path: '/company/history' },
+        { name: 'Chatbot', icon: MessageCircle, path: '/company/chatbot' },
         { name: 'Settings', icon: Settings, path: '/company/settings' },
     ];
 
@@ -69,9 +71,13 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) =
         ${isCollapsed ? 'w-24' : 'w-80'}
       `}>
                 <div className={`p-10 ${isCollapsed ? 'px-4 text-center' : 'px-10'}`}>
-                    <h1 className={`font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-indigo-500 bg-clip-text text-transparent transition-all duration-300 ${isCollapsed ? 'text-xl' : 'text-3xl'}`}>
-                        {isCollapsed ? 'AC' : 'AirTimeConnect'}
-                    </h1>
+                    {isCollapsed ? (
+                        <div className="flex justify-center">
+                            <Logo showText={false} iconClassName="w-10 h-10" />
+                        </div>
+                    ) : (
+                        <Logo textClassName="text-3xl font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-indigo-500 bg-clip-text text-transparent" />
+                    )}
                     {!isCollapsed && (
                         <p className="text-sm text-slate-400 mt-2 uppercase font-black tracking-[0.3em] whitespace-nowrap overflow-hidden">
                             {user.role} Portal

@@ -31,6 +31,36 @@ const TransactionHistoryPage = () => {
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const pageSize = 12;
 
+    const handleDownloadTransaction = (e: React.MouseEvent, tx: any) => {
+        e.stopPropagation(); // prevent row click (modal open)
+        const isCredit = tx.type === 'CREDIT';
+        const lines: string[] = [];
+        lines.push(`Transaction ID,${tx.id}`);
+        lines.push(`Type,${isCredit ? 'Wallet Top-up' : 'Bulk Distribution'}`);
+        lines.push(`Amount,${isCredit ? '+' : '-'}$${tx.amount.toFixed(2)}`);
+        lines.push(`Status,${tx.status}`);
+        lines.push(`Payment Method,${tx.paymentMethod || 'Wallet Balance'}`);
+        lines.push(`Date,${new Date(tx.createdAt).toLocaleString()}`);
+        lines.push(`Recipients Count,${tx.recipientsCount}`);
+        if (!isCredit && tx.recipients && tx.recipients.length > 0) {
+            lines.push('');
+            lines.push('Recipient Name,Phone Number,Amount,Status');
+            tx.recipients.forEach((r: any) => {
+                lines.push([`"${r.name || 'Unknown'}"`, r.phoneNumber, `$${r.amount.toFixed(2)}`, r.status].join(','));
+            });
+        }
+        const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `transaction_${tx.id}_${new Date(tx.createdAt).toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     const fetchTransactions = useCallback(async () => {
         setLoading(true);
         try {
@@ -153,20 +183,21 @@ const TransactionHistoryPage = () => {
                                 <th className="px-8 py-6 text-sm font-black text-gray-400 uppercase tracking-widest text-center">Batch Size</th>
                                 <th className="px-8 py-6 text-sm font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
                                 <th className="px-8 py-6 text-sm font-black text-gray-400 uppercase tracking-widest text-right">Value</th>
+                                <th className="px-8 py-6 text-sm font-black text-gray-400 uppercase tracking-widest text-center">Download</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
-                                        <td colSpan={5} className="px-12 py-12">
+                                        <td colSpan={6} className="px-12 py-12">
                                             <div className="h-10 bg-gray-100 rounded-[2rem] w-full"></div>
                                         </td>
                                     </tr>
                                 ))
                             ) : transactions.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-12 py-40 text-center">
+                                    <td colSpan={6} className="px-12 py-40 text-center">
                                         <div className="flex flex-col items-center justify-center opacity-30">
                                             <div className="p-12 bg-gray-50 rounded-full mb-8">
                                                 <HistoryIcon className="w-32 h-32 text-gray-300" />
@@ -233,6 +264,15 @@ const TransactionHistoryPage = () => {
                                             <div className={`text-xl font-black tracking-tight ${tx.type === 'CREDIT' ? 'text-emerald-600' : 'text-gray-900'}`}>
                                                 {tx.type === 'CREDIT' ? '+' : '-'}${tx.amount.toLocaleString()}
                                             </div>
+                                        </td>
+                                        <td className="px-8 py-6 text-center">
+                                            <button
+                                                onClick={(e) => handleDownloadTransaction(e, tx)}
+                                                title="Download this transaction as CSV"
+                                                className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-90 border border-indigo-100"
+                                            >
+                                                <Download className="w-4 h-4" />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
