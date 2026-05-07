@@ -12,12 +12,12 @@ interface WalletModalProps {
 
 const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, currentBalance }) => {
   const router = useRouter();
-  const [amount, setAmount] = useState<number>(1000);
+  const [amount, setAmount] = useState<string>('1000');
 
   if (!isOpen) return null;
 
   const handleProceed = () => {
-    router.push(`/company/checkout?amount=${amount}`);
+    router.push(`/company/checkout?amount=${Number(amount) || 0}`);
     onClose();
   };
 
@@ -44,8 +44,8 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, currentBalan
             {[500, 1000, 2500, 5000].map((val) => (
               <button
                 key={val}
-                onClick={() => setAmount(val)}
-                className={`py-6 rounded-2xl font-black transition-all border-2 text-xl ${amount === val
+                onClick={() => setAmount(String(val))}
+                className={`py-6 rounded-2xl font-black transition-all border-2 text-xl ${Number(amount) === val
                   ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-100'
                   : 'bg-white border-gray-100 text-gray-700 hover:border-indigo-200'
                   }`}
@@ -62,7 +62,12 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, currentBalan
               <input
                 type="number"
                 value={amount}
-                onChange={(e) => setAmount(Number(e.target.value))}
+                onChange={(e) => {
+                  // Strip leading zeros — convert to number then back to string
+                  const raw = e.target.value;
+                  const cleaned = raw === '' ? '' : String(Number(raw));
+                  setAmount(cleaned);
+                }}
                 className="w-full pl-14 pr-8 py-5 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl text-3xl font-black outline-none transition-all"
               />
             </div>
@@ -71,7 +76,7 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, currentBalan
           <div className="p-6 bg-indigo-50 rounded-2xl space-y-3 border border-indigo-100/50">
             <div className="flex items-center justify-between text-lg">
               <span className="text-indigo-600 font-black">Estimated Credit</span>
-              <span className="text-indigo-900 font-black font-mono text-xl">${amount.toLocaleString()}</span>
+              <span className="text-indigo-900 font-black font-mono text-xl">${(Number(amount) || 0).toLocaleString()}</span>
             </div>
             <p className="text-[10px] text-indigo-400 font-bold leading-relaxed uppercase tracking-wider">
               * Final amount might vary if you apply a promo code during checkout.

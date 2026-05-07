@@ -39,7 +39,91 @@ const CheckoutPage = () => {
     const [promoStatus, setPromoStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
     const [promoMessage, setPromoMessage] = useState('');
 
-    const [cardData, setCardData] = useState({ number: '', expiry: '', cvv: '' });
+    const [cardData, setCardData] = useState({ number: '', name: '', expiry: '', cvv: '' });
+    const [cardErrors, setCardErrors] = useState({ number: '', name: '', expiry: '', cvv: '' });
+
+    // ── Card helpers ─────────────────────────────────────────────────────────
+    const detectCardType = (raw: string): 'visa' | 'mastercard' | null => {
+        const n = raw.replace(/\s/g, '');
+        if (/^4/.test(n)) return 'visa';
+        if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return 'mastercard';
+        return null;
+    };
+
+    const formatCardNumber = (value: string) => {
+        const digits = value.replace(/\D/g, '').slice(0, 16);
+        return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+    };
+
+    const formatExpiry = (value: string) => {
+        // Strip non-digits
+        const digits = value.replace(/\D/g, '').slice(0, 4);
+        if (digits.length >= 3) return digits.slice(0, 2) + '/' + digits.slice(2);
+        return digits;
+    };
+
+    const validateExpiry = (value: string): string => {
+        const [mm, yy] = value.split('/');
+        if (!mm || !yy || yy.length < 2) return 'Enter a valid expiry date';
+        const month = parseInt(mm, 10);
+        const year = 2000 + parseInt(yy, 10);
+        if (month < 1 || month > 12) return 'Month must be between 01 and 12';
+        const now = new Date();
+        const expDate = new Date(year, month, 0); // last day of expiry month
+        if (expDate < now) return 'This card has expired';
+        return '';
+    };
+
+    const validateCardNumber = (value: string): string => {
+        const digits = value.replace(/\s/g, '');
+        if (digits.length < 16) return 'Card number must be 16 digits';
+        // Luhn check
+        let sum = 0;
+        for (let i = 0; i < digits.length; i++) {
+            let d = parseInt(digits[digits.length - 1 - i]);
+            if (i % 2 === 1) { d *= 2; if (d > 9) d -= 9; }
+            sum += d;
+        }
+        if (sum % 10 !== 0) return 'Invalid card number';
+        return '';
+    };
+
+    const validateCVV = (value: string): string => {
+        if (!/^\d{3}$/.test(value)) return 'CVV must be exactly 3 digits';
+        return '';
+    };
+
+    const validateName = (value: string): string => {
+        if (value.trim().length < 3) return 'Enter the name as it appears on the card';
+        return '';
+    };
+
+    const isCardValid = () => {
+        if (selectedMethod !== 'card') return true;
+        return (
+            !validateCardNumber(cardData.number) &&
+            !validateName(cardData.name) &&
+            !validateExpiry(cardData.expiry) &&
+            !validateCVV(cardData.cvv)
+        );
+    };
+
+    const handleCardChange = (field: keyof typeof cardData, raw: string) => {
+        let val = raw;
+        if (field === 'number') val = formatCardNumber(raw);
+        if (field === 'expiry') val = formatExpiry(raw);
+        if (field === 'cvv') val = raw.replace(/\D/g, '').slice(0, 3);
+        setCardData(prev => ({ ...prev, [field]: val }));
+    };
+
+    const blurCardField = (field: keyof typeof cardErrors) => {
+        let err = '';
+        if (field === 'number') err = validateCardNumber(cardData.number);
+        if (field === 'name') err = validateName(cardData.name);
+        if (field === 'expiry') err = validateExpiry(cardData.expiry);
+        if (field === 'cvv') err = validateCVV(cardData.cvv);
+        setCardErrors(prev => ({ ...prev, [field]: err }));
+    };
     const [ecoCashNumber, setEcoCashNumber] = useState('');
 
     const [modal, setModal] = useState<{ isOpen: boolean, title: string, message: string, type: 'error' | 'success' | 'info' }>({
@@ -83,14 +167,25 @@ const CheckoutPage = () => {
     };
 
     const handlePayment = async () => {
-        if (selectedMethod === 'card' && (!cardData.number || !cardData.expiry || !cardData.cvv)) {
-            setModal({
-                isOpen: true,
-                title: 'Missing Information',
-                message: 'Please fill in all card details to proceed with the payment.',
-                type: 'error'
-            });
-            return;
+        if (selectedMethod === 'card') {
+            // Run all validations and show inline errors
+            const errs = {
+                number: validateCardNumber(cardData.number),
+                name: validateName(cardData.name),
+                expiry: validateExpiry(cardData.expiry),
+                cvv: validateCVV(cardData.cvv),
+            };
+            setCardErrors(errs);
+            const hasError = Object.values(errs).some(Boolean);
+            if (hasError) {
+                setModal({
+                    isOpen: true,
+                    title: 'Invalid Card Details',
+                    message: 'Please correct the highlighted card fields before continuing.',
+                    type: 'error'
+                });
+                return;
+            }
         }
         if (selectedMethod === 'ecocash' && !ecoCashNumber) {
             setModal({
@@ -326,41 +421,120 @@ const CheckoutPage = () => {
                         {/* Conditional Payment Inputs */}
                         <div className="pt-8 border-t border-gray-100">
                             {selectedMethod === 'card' ? (
-                                <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
-                                    <h3 className="text-lg font-black text-gray-900">Card Information</h3>
+                                <div className="space-y-5 animate-in slide-in-from-top-4 duration-300">
+                                    {/* Card type badge */}
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-black text-gray-900">Card Information</h3>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-xs font-black px-3 py-1 rounded-full transition-all ${
+                                                detectCardType(cardData.number) === 'visa'
+                                                    ? 'bg-blue-100 text-blue-700'
+                                                    : detectCardType(cardData.number) === 'mastercard'
+                                                    ? 'bg-orange-100 text-orange-700'
+                                                    : 'bg-gray-100 text-gray-400'
+                                            }`}>
+                                                {detectCardType(cardData.number) === 'visa' ? '💳 VISA'
+                                                    : detectCardType(cardData.number) === 'mastercard' ? '💳 MASTERCARD'
+                                                    : '💳 CARD'}
+                                            </span>
+                                        </div>
+                                    </div>
+
                                     <div className="grid grid-cols-1 gap-4">
+                                        {/* Card Number */}
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Card Number</label>
                                             <input
                                                 type="text"
+                                                inputMode="numeric"
                                                 placeholder="0000 0000 0000 0000"
-                                                className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-bold text-sm outline-none transition-all"
+                                                maxLength={19}
+                                                className={`w-full px-5 py-3.5 bg-gray-50 border-2 rounded-xl font-mono font-bold text-sm outline-none tracking-widest transition-all ${
+                                                    cardErrors.number ? 'border-red-400 bg-red-50' : 'border-transparent focus:border-indigo-500'
+                                                }`}
                                                 value={cardData.number}
-                                                onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
+                                                onChange={(e) => handleCardChange('number', e.target.value)}
+                                                onBlur={() => blurCardField('number')}
                                             />
+                                            {cardErrors.number && (
+                                                <p className="text-xs text-red-500 font-bold flex items-center gap-1 ml-1">
+                                                    <AlertCircle className="w-3 h-3" /> {cardErrors.number}
+                                                </p>
+                                            )}
                                         </div>
+
+                                        {/* Cardholder Name */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cardholder Name</label>
+                                            <input
+                                                type="text"
+                                                placeholder="JOHN DOE"
+                                                autoComplete="cc-name"
+                                                className={`w-full px-5 py-3.5 bg-gray-50 border-2 rounded-xl font-bold text-sm outline-none uppercase tracking-wider transition-all ${
+                                                    cardErrors.name ? 'border-red-400 bg-red-50' : 'border-transparent focus:border-indigo-500'
+                                                }`}
+                                                value={cardData.name}
+                                                onChange={(e) => handleCardChange('name', e.target.value.toUpperCase())}
+                                                onBlur={() => blurCardField('name')}
+                                            />
+                                            {cardErrors.name && (
+                                                <p className="text-xs text-red-500 font-bold flex items-center gap-1 ml-1">
+                                                    <AlertCircle className="w-3 h-3" /> {cardErrors.name}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Expiry + CVV */}
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1.5">
                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Expiry Date</label>
                                                 <input
                                                     type="text"
+                                                    inputMode="numeric"
                                                     placeholder="MM/YY"
-                                                    className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-bold text-sm outline-none transition-all"
+                                                    maxLength={5}
+                                                    className={`w-full px-5 py-3.5 bg-gray-50 border-2 rounded-xl font-bold text-sm outline-none transition-all ${
+                                                        cardErrors.expiry ? 'border-red-400 bg-red-50' : 'border-transparent focus:border-indigo-500'
+                                                    }`}
                                                     value={cardData.expiry}
-                                                    onChange={(e) => setCardData({ ...cardData, expiry: e.target.value })}
+                                                    onChange={(e) => handleCardChange('expiry', e.target.value)}
+                                                    onBlur={() => blurCardField('expiry')}
                                                 />
+                                                {cardErrors.expiry && (
+                                                    <p className="text-xs text-red-500 font-bold flex items-center gap-1 ml-1">
+                                                        <AlertCircle className="w-3 h-3" /> {cardErrors.expiry}
+                                                    </p>
+                                                )}
                                             </div>
                                             <div className="space-y-1.5">
                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CVV</label>
                                                 <input
                                                     type="password"
-                                                    placeholder="123"
-                                                    className="w-full px-5 py-3.5 bg-gray-50 border-2 border-transparent focus:border-indigo-500 rounded-xl font-bold text-sm outline-none transition-all"
+                                                    inputMode="numeric"
+                                                    placeholder="•••"
+                                                    maxLength={3}
+                                                    className={`w-full px-5 py-3.5 bg-gray-50 border-2 rounded-xl font-bold text-sm outline-none transition-all ${
+                                                        cardErrors.cvv ? 'border-red-400 bg-red-50' : 'border-transparent focus:border-indigo-500'
+                                                    }`}
                                                     value={cardData.cvv}
-                                                    onChange={(e) => setCardData({ ...cardData, cvv: e.target.value })}
+                                                    onChange={(e) => handleCardChange('cvv', e.target.value)}
+                                                    onBlur={() => blurCardField('cvv')}
                                                 />
+                                                {cardErrors.cvv && (
+                                                    <p className="text-xs text-red-500 font-bold flex items-center gap-1 ml-1">
+                                                        <AlertCircle className="w-3 h-3" /> {cardErrors.cvv}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
+                                    </div>
+
+                                    {/* Security note */}
+                                    <div className="flex items-start gap-3 bg-indigo-50 rounded-xl p-4 border border-indigo-100">
+                                        <ShieldCheck className="w-5 h-5 text-indigo-500 mt-0.5 flex-shrink-0" />
+                                        <p className="text-xs text-indigo-600 font-bold leading-relaxed">
+                                            Your card details are encrypted with 256-bit SSL. We never store your full card number.
+                                        </p>
                                     </div>
                                 </div>
                             ) : (
@@ -437,7 +611,8 @@ const CheckoutPage = () => {
 
                             <button
                                 onClick={handlePayment}
-                                className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg rounded-2xl transition-all shadow-xl shadow-indigo-100 mb-6 flex items-center justify-center group uppercase tracking-widest"
+                                disabled={selectedMethod === 'card' && !isCardValid()}
+                                className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-lg rounded-2xl transition-all shadow-xl shadow-indigo-100 mb-6 flex items-center justify-center group uppercase tracking-widest"
                             >
                                 Pay Securely
                                 <ChevronRight className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform" />
