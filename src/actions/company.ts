@@ -14,6 +14,18 @@ function generateTransactionRef() {
     return `T${timestamp}${random}`;
 }
 
+function formatPhoneNumber(phoneNumber: string): string {
+    // Remove any spaces, dashes, or parentheses
+    let cleaned = phoneNumber.replace(/[\s\-()]/g, '');
+    
+    // Add "+" prefix if not present
+    if (!cleaned.startsWith('+')) {
+        cleaned = '+' + cleaned;
+    }
+    
+    return cleaned;
+}
+
 export async function getCompanyDashboardData() {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== "COMPANY") {
@@ -131,7 +143,13 @@ export async function distributeAirtime(data: { recipients: any[] }) {
         throw new Error("Invalid Amount: All recipient amounts must be greater than zero");
     }
 
-    const totalAmount = data.recipients.reduce((sum, r) => sum + r.amount, 0);
+    // Format phone numbers - ensure all have "+" prefix
+    const formattedRecipients = data.recipients.map(r => ({
+        ...r,
+        phoneNumber: formatPhoneNumber(r.phoneNumber)
+    }));
+
+    const totalAmount = formattedRecipients.reduce((sum, r) => sum + r.amount, 0);
 
     const result = await prisma.$transaction(async (tx) => {
         const wallet = await tx.wallet.findUnique({
@@ -156,14 +174,14 @@ export async function distributeAirtime(data: { recipients: any[] }) {
                 amount: totalAmount,
                 type: TransactionType.DEBIT,
                 status: TransactionStatus.COMPLETED,
-                recipientsCount: data.recipients.length,
+                recipientsCount: formattedRecipients.length,
                 paymentMethod: "Wallet Balance",
             },
         });
 
         // Use createMany for mass recipients (much faster than nested create)
         await tx.recipient.createMany({
-            data: data.recipients.map((r) => ({
+            data: formattedRecipients.map((r) => ({
                 transactionId: transaction.id,
                 name: r.name,
                 phoneNumber: r.phoneNumber,
@@ -180,7 +198,7 @@ export async function distributeAirtime(data: { recipients: any[] }) {
 
     await createLog({
         type: 'DISTRIBUTION',
-        message: `Distributed $${totalAmount} to ${data.recipients.length} recipients`,
+        message: `Distributed $${totalAmount} to ${formattedRecipients.length} recipients`,
         userId
     });
 
@@ -188,11 +206,26 @@ export async function distributeAirtime(data: { recipients: any[] }) {
     const userWithCompany = await prisma.user.findUnique({ where: { id: userId } });
     if (userWithCompany) {
         const companyName = userWithCompany.companyName || userWithCompany.name || "Unknown Company";
-        sendRecipientNotifications(data.recipients, companyName, result.transactionId)
-            .catch((err: Error) => console.error('SMS notification error:', err));
+        
+        // Send SMS notifications asynchronously (don't block the response)
+        sendRecipientNotifications(formattedRecipients, companyName, result.transactionId)
+            .then(() => {
+                console.log(`✓ SMS notifications sent for transaction ${result.transactionId}`);
+                createLog({
+                    type: 'SMS',
+                    message: `SMS sent to ${formattedRecipients.length} recipients for transaction ${result.transactionId}`,
+                    userId
+                }).catch(err => console.error('Failed to log SMS:', err));
+            })
+            .catch((err: Error) => {
+                console.error(`✗ SMS notification error for transaction ${result.transactionId}:`, err.message);
+                createLog({
+                    type: 'SMS_ERROR',
+                    message: `Failed to send SMS: ${err.message}`,
+                    userId
+                }).catch(logErr => console.error('Failed to log SMS error:', logErr));
+            });
     }
-
-
 
     revalidatePath("/company");
     revalidatePath("/company/history");
