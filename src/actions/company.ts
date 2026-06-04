@@ -15,14 +15,19 @@ function generateTransactionRef() {
 }
 
 function formatPhoneNumber(phoneNumber: string): string {
-    // Remove any spaces, dashes, or parentheses
-    let cleaned = phoneNumber.replace(/[\s\-()]/g, '');
-    
-    // Add "+" prefix if not present
+    // Remove any spaces, dashes, parentheses, or quotes
+    let cleaned = phoneNumber.toString().replace(/[\s\-()"']/g, '');
+
+    // Convert local Zimbabwean numbers (07xxxxxxxx or 086xxxxxxx) to E.164
+    if (cleaned.startsWith('0')) {
+        cleaned = '+263' + cleaned.substring(1);
+    }
+
+    // Add "+" prefix if not already an international number
     if (!cleaned.startsWith('+')) {
         cleaned = '+' + cleaned;
     }
-    
+
     return cleaned;
 }
 
