@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 export async function createLog(data: {
-    type: 'AUTH' | 'DISTRIBUTION' | 'WALLET' | 'SYSTEM' | 'ADMIN';
+    type: 'AUTH' | 'DISTRIBUTION' | 'WALLET' | 'SYSTEM' | 'ADMIN' | 'SMS' | 'SMS_ERROR';
     message: string;
     userId?: string;
 }) {
