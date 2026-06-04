@@ -23,14 +23,22 @@ export async function sendRecipientNotifications(
     transactionId: string
 ) {
     if (!client || !fromPhoneNumber) {
-        console.warn('Twilio not configured. Skipping SMS notifications.');
+        console.warn('⚠️ Twilio not configured. Skipping SMS notifications.');
+        console.warn(`Missing: ${!client ? 'Twilio client' : ''} ${!fromPhoneNumber ? 'fromPhoneNumber' : ''}`);
         return;
     }
 
+    console.log(`📱 Starting SMS batch send: ${recipients.length} recipients, Transaction: ${transactionId}`);
+
     // Send SMS to each recipient in batches to avoid rate limits
     const batchSize = 10;
+    let successCount = 0;
+    let failureCount = 0;
+
     for (let i = 0; i < recipients.length; i += batchSize) {
         const batch = recipients.slice(i, i + batchSize);
+        console.log(`📤 Batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(recipients.length / batchSize)}: Sending to ${batch.length} recipients`);
+
         const results = await Promise.allSettled(
             batch.map(async (recipient) => {
                 const message = await client.messages.create({
@@ -45,12 +53,19 @@ export async function sendRecipientNotifications(
         results.forEach((result, index) => {
             const recipient = batch[index];
             if (result.status === 'fulfilled') {
-                console.log(`SMS sent to ${recipient.name} (${recipient.phoneNumber}): ${result.value.sid}`);
+                successCount++;
+                console.log(`✓ SMS sent to ${recipient.name} (${recipient.phoneNumber}) - SID: ${result.value.sid}`);
             } else {
-                console.error(`Failed to send SMS to ${recipient.name} (${recipient.phoneNumber}): ${result.reason}`);
+                failureCount++;
+                const error = result.reason;
+                console.error(`✗ Failed to send SMS to ${recipient.name} (${recipient.phoneNumber})`);
+                console.error(`  Error: ${error.message || error}`);
+                if (error.code) console.error(`  Code: ${error.code}`);
             }
         });
     }
+
+    console.log(`📊 SMS batch complete: ${successCount} sent, ${failureCount} failed out of ${recipients.length} total`);
 }
 
 

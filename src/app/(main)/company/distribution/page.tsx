@@ -123,10 +123,7 @@ const CompanyDistribution: React.FC = () => {
           const phoneNumber = phoneNumberRaw.replace(/[^\d+]/g, '');
           parsedRecipients.push({
             name: name || 'User',
-            phoneNumber:
-              phoneNumber.startsWith('+') || phoneNumber.length > 10
-                ? phoneNumber
-                : `+${phoneNumber}`,
+            phoneNumber: phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`,
             amount,
             status: 'pending',
           });
