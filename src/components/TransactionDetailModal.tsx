@@ -15,6 +15,7 @@ import {
     ExternalLink,
     Download,
 } from 'lucide-react';
+import { displayPhoneNumber } from '@/lib/phoneFormatter';
 
 interface Recipient {
     id: string;
@@ -71,7 +72,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                 lines.push(
                     [
                         `"${r.name || 'Unknown'}"`,
-                        r.phoneNumber,
+                        displayPhoneNumber(r.phoneNumber),
                         `$${r.amount.toFixed(2)}`,
                         r.status,
                     ].join(',')
@@ -188,7 +189,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                                             </div>
                                             <div>
                                                 <p className="font-black text-gray-900">{recipient.name || 'Unknown Recipient'}</p>
-                                                <p className="text-sm text-gray-400 font-bold font-mono tracking-tight">{recipient.phoneNumber}</p>
+                                                <p className="text-sm text-gray-400 font-bold font-mono tracking-tight">{displayPhoneNumber(recipient.phoneNumber)}</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
