@@ -7,6 +7,7 @@ import { TransactionType, TransactionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { createLog } from "@/lib/logger";
 import { sendRecipientNotifications } from "@/lib/twilio";
+import { formatPhoneNumber } from "@/lib/phoneFormatter";
 
 function generateTransactionRef() {
     const timestamp = new Date().getTime().toString().substring(1); // Remove first digit for length control
@@ -39,14 +40,37 @@ export async function getCompanyDashboardData() {
 
     const userId = (session.user as any).id;
 
+    // Use select instead of include to reduce query complexity
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        include: {
-            wallet: true,
+        select: {
+            id: true,
+            email: true,
+            name: true,
+            status: true,
+            wallet: {
+                select: {
+                    id: true,
+                    balance: true,
+                }
+            },
             transactions: {
                 orderBy: { createdAt: "desc" },
                 take: 10,
-                include: { recipients: true },
+                select: {
+                    id: true,
+                    amount: true,
+                    type: true,
+                    status: true,
+                    createdAt: true,
+                    recipients: {
+                        select: {
+                            id: true,
+                            phoneNumber: true,
+                            amount: true,
+                        }
+                    },
+                },
             },
         },
     });
@@ -115,13 +139,22 @@ export async function getCompanyDashboardData() {
         where: { transaction: { userId } },
     });
 
+    // Format phone numbers in transactions
+    const formattedTransactions = user.transactions.map(tx => ({
+        ...tx,
+        recipients: tx.recipients?.map(r => ({
+            ...r,
+            phoneNumber: formatPhoneNumber(r.phoneNumber),
+        })) || [],
+    }));
+
     return {
         user: {
             name: user.name,
             balance: wallet.balance,
             companyName: user.companyName,
         },
-        transactions: user.transactions,
+        transactions: formattedTransactions,
         trends,
         metrics: {
             monthlyVolume: debitStats?._sum.amount || 0,
