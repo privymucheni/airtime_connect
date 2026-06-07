@@ -3,6 +3,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { Recipient } from '@/types';
+import { formatPhoneNumber, displayPhoneNumber } from '@/lib/phoneFormatter';
 import {
   Upload, FileText, CheckCircle2, Send, Download,
   AlertCircle, AlertTriangle, X, Trash2
@@ -120,10 +121,10 @@ const CompanyDistribution: React.FC = () => {
             continue;
           }
 
-          const phoneNumber = phoneNumberRaw.replace(/[^\d+]/g, '');
+          const phoneNumber = formatPhoneNumber(phoneNumberRaw);
           parsedRecipients.push({
             name: name || 'User',
-            phoneNumber: phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`,
+            phoneNumber,
             amount,
             status: 'pending',
           });
@@ -402,7 +403,7 @@ const CompanyDistribution: React.FC = () => {
                             </div>
                           </td>
                           <td className={`px-6 py-4 text-base font-bold font-mono ${isDupe ? 'text-red-600' : 'text-gray-500'}`}>
-                            {r.phoneNumber}
+                            {displayPhoneNumber(r.phoneNumber)}
                           </td>
                           <td className={`px-6 py-4 text-right font-black text-lg tracking-tight ${isDupe ? 'text-red-600' : 'text-indigo-600'}`}>
                             ${r.amount.toLocaleString()}
