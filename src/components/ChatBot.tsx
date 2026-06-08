@@ -37,10 +37,6 @@ export const ChatBot = () => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
 
-    if (pathname === '/company/chatbot') {
-        return null;
-    }
-
     const initChat = async () => {
         setIsLoading(true);
         setMessages([]);
@@ -72,6 +68,10 @@ export const ChatBot = () => {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages]);
+
+    if (pathname === '/company/chatbot') {
+        return null;
+    }
 
     const handleOptionSelect = async (question: ChatQuestion) => {
         if (isLoading) return;

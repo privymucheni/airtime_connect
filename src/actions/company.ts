@@ -15,23 +15,6 @@ function generateTransactionRef() {
     return `T${timestamp}${random}`;
 }
 
-function formatPhoneNumber(phoneNumber: string): string {
-    // Remove any spaces, dashes, parentheses, or quotes
-    let cleaned = phoneNumber.toString().replace(/[\s\-()"']/g, '');
-
-    // Convert local Zimbabwean numbers (07xxxxxxxx or 086xxxxxxx) to E.164
-    if (cleaned.startsWith('0')) {
-        cleaned = '+263' + cleaned.substring(1);
-    }
-
-    // Add "+" prefix if not already an international number
-    if (!cleaned.startsWith('+')) {
-        cleaned = '+' + cleaned;
-    }
-
-    return cleaned;
-}
-
 export async function getCompanyDashboardData() {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== "COMPANY") {
@@ -48,6 +31,7 @@ export async function getCompanyDashboardData() {
             email: true,
             name: true,
             status: true,
+            companyName: true,
             wallet: {
                 select: {
                     id: true,

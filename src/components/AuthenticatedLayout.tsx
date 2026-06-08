@@ -18,10 +18,13 @@ import {
     History,
     Activity,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    CreditCard,
+    Plus
 } from 'lucide-react';
 import ProfileModal from './ProfileModal';
 import Logo from './Logo';
+import WalletModal from './WalletModal';
 
 interface AuthenticatedLayoutProps {
     children: React.ReactNode;
@@ -32,6 +35,7 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) =
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
     const pathname = usePathname();
 
     if (!user) return null;
@@ -48,44 +52,48 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) =
 
     const companyMenu = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/company' },
-        { name: 'Bulk Distribution', icon: Send, path: '/company/distribution' },
+        { name: 'Distributions', icon: Send, path: '/company/distribution' },
+        { name: 'Wallet', icon: CreditCard, path: '/company/wallet' },
         { name: 'History', icon: History, path: '/company/history' },
-        { name: 'Chatbot', icon: MessageCircle, path: '/company/chatbot' },
         { name: 'Settings', icon: Settings, path: '/company/settings' },
     ];
 
     const menuItems = user.role === UserRole.ADMIN ? adminMenu : companyMenu;
 
+    const getGreeting = (name: string) => {
+        const hour = new Date().getHours();
+        if (hour < 12) return `Good morning, ${name}`;
+        if (hour < 18) return `Good afternoon, ${name}`;
+        return `Good evening, ${name}`;
+    };
+
     return (
-        <div className="min-h-screen flex bg-gray-50">
+        <div className="min-h-screen flex bg-[#F7F9FC]">
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    className="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-sm"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
 
+            {/* Sidebar Navigation */}
             <aside className={`
-        fixed inset-y-0 left-0 bg-slate-900 text-white z-50 lg:translate-x-0 lg:static
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${isCollapsed ? 'w-24' : 'w-80'}
-      `}>
-                <div className={`p-10 ${isCollapsed ? 'px-4 text-center' : 'px-10'}`}>
+                fixed inset-y-0 left-0 bg-slate-900 text-white z-50 lg:translate-x-0 lg:static
+                flex flex-col border-r border-slate-800 transition-all duration-300
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                ${isCollapsed ? 'w-20' : 'w-72'}
+            `}>
+                {/* Logo section */}
+                <div className={`p-6 border-b border-slate-800/50 flex items-center justify-between ${isCollapsed ? 'justify-center' : ''}`}>
                     {isCollapsed ? (
-                        <div className="flex justify-center">
-                            <Logo showText={false} iconClassName="w-10 h-10" />
-                        </div>
+                        <Logo showText={false} iconClassName="w-8 h-8" />
                     ) : (
-                        <Logo textClassName="text-3xl font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-indigo-500 bg-clip-text text-transparent" />
-                    )}
-                    {!isCollapsed && (
-                        <p className="text-sm text-slate-400 mt-2 uppercase font-black tracking-[0.3em] whitespace-nowrap overflow-hidden">
-                            {user.role} Portal
-                        </p>
+                        <Logo textClassName="text-xl font-bold bg-gradient-to-r from-blue-400 via-indigo-400 to-indigo-500 bg-clip-text text-transparent" />
                     )}
                 </div>
 
-                <nav className={`mt-6 space-y-3 transition-all duration-300 ${isCollapsed ? 'px-4' : 'px-6'}`}>
+                {/* Nav Links */}
+                <nav className={`mt-6 space-y-1.5 flex-1 ${isCollapsed ? 'px-2' : 'px-4'}`}>
                     {menuItems.map((item) => {
                         const isActive = pathname === item.path;
                         return (
@@ -94,89 +102,127 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) =
                                 href={item.path}
                                 title={isCollapsed ? item.name : ''}
                                 className={`
-                  w-full flex items-center rounded-2xl transition-all duration-300
-                  ${isCollapsed ? 'justify-center p-4' : 'space-x-4 px-6 py-4'}
-                  ${isActive ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-900/40 translate-x-1' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}
-                `}
+                                    w-full flex items-center rounded-xl transition-all duration-200 relative
+                                    ${isCollapsed ? 'justify-center p-3.5' : 'space-x-3.5 px-4 py-3.5'}
+                                    ${isActive 
+                                        ? 'bg-slate-800 text-white font-semibold' 
+                                        : 'text-slate-400 hover:bg-slate-800/70 hover:text-white'
+                                    }
+                                `}
                                 onClick={() => setIsSidebarOpen(false)}
                             >
-                                <item.icon className="w-6 h-6 stroke-[2.5px] flex-shrink-0" />
-                                {!isCollapsed && <span className="font-black text-lg whitespace-nowrap">{item.name}</span>}
+                                {isActive && (
+                                    <span className="absolute left-0 top-3 bottom-3 w-1 bg-[#4C6EF5] rounded-r-full" />
+                                )}
+                                <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-[#4C6EF5]' : 'text-slate-400'}`} />
+                                {!isCollapsed && <span className="text-sm">{item.name}</span>}
                             </Link>
                         );
                     })}
                 </nav>
 
-                <div className={`absolute bottom-0 w-full border-t border-slate-800/50 bg-slate-900/50 backdrop-blur-md transition-all duration-300 ${isCollapsed ? 'p-4' : 'p-8'}`}>
+                {/* Sidebar Footer: Avatar + Logout */}
+                <div className={`p-4 border-t border-slate-800 bg-slate-900/50 space-y-3`}>
+                    {!isCollapsed && (
+                        <div className="flex items-center space-x-3 px-2 py-1.5 bg-slate-800/50 rounded-xl">
+                            <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm border border-slate-700">
+                                {user.name.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-white truncate">{user.name}</p>
+                                <p className="text-[10px] text-slate-400 truncate">{user.companyName || user.email}</p>
+                            </div>
+                        </div>
+                    )}
                     <button
                         onClick={logout}
                         title={isCollapsed ? 'Logout' : ''}
-                        className={`w-full flex items-center text-red-400 hover:bg-red-500/10 rounded-2xl transition-all group ${isCollapsed ? 'justify-center p-4' : 'space-x-4 px-6 py-4'}`}
+                        className={`w-full flex items-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all group ${isCollapsed ? 'justify-center p-3.5' : 'space-x-3.5 px-4 py-3'}`}
                     >
-                        <LogOut className={`w-6 h-6 group-hover:-translate-x-1 transition-transform flex-shrink-0`} />
-                        {!isCollapsed && <span className="font-black text-lg">Logout</span>}
+                        <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform flex-shrink-0" />
+                        {!isCollapsed && <span className="text-xs font-medium">Logout</span>}
                     </button>
                 </div>
             </aside>
 
+            {/* Main Content Area */}
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <header className="h-24 bg-white border-b border-gray-100 flex items-center justify-between px-10 sticky top-0 z-30 shadow-sm">
-                    <div className="flex items-center space-x-6">
+                {/* Header */}
+                <header className="h-20 bg-white border-b border-[#E4E7EC] flex items-center justify-between px-8 sticky top-0 z-30 shadow-sm">
+                    {/* Header Left: Menu trigger & greeting */}
+                    <div className="flex items-center space-x-4">
                         <button
-                            className="lg:hidden p-3 text-gray-500 hover:bg-gray-100 rounded-xl"
+                            className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
                             onClick={() => setIsSidebarOpen(true)}
                         >
-                            <Menu className="w-8 h-8" />
+                            <Menu className="w-6 h-6" />
                         </button>
 
                         <button
                             onClick={() => setIsCollapsed(!isCollapsed)}
-                            className="hidden lg:flex p-3 text-indigo-600 hover:bg-indigo-50 bg-indigo-50/50 rounded-xl transition-all border border-indigo-100/50 items-center space-x-3 group"
+                            className="hidden lg:flex p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all"
+                            title={isCollapsed ? 'Expand Menu' : 'Collapse Menu'}
                         >
-                            {isCollapsed ? <ChevronRight className="w-6 h-6" /> : <ChevronLeft className="w-6 h-6" />}
-                            <span className="font-black text-sm uppercase tracking-widest hidden xl:block">
-                                {isCollapsed ? 'Expand Menu' : 'Collapse Menu'}
-                            </span>
+                            {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
                         </button>
+
+                        <div className="hidden sm:block">
+                            <h2 className="text-base font-semibold text-[#1A1A1A]">
+                                {getGreeting(user.name.split(' ')[0])}
+                            </h2>
+                            <p className="text-[11px] text-[#6B7280]">Welcome back to your AirFlow portal.</p>
+                        </div>
                     </div>
 
-                    <div className="flex-1 lg:flex-none"></div>
-
+                    {/* Header Right: Actions & User Info */}
                     <div className="flex items-center space-x-6">
+                        {/* Quick actions for Company user */}
                         {user.role === UserRole.COMPANY && (
-                            <div className="hidden sm:flex flex-col items-end px-6 py-2 border-l-2 border-indigo-50 bg-indigo-50/20 rounded-2xl">
-                                <span className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em] mb-0.5">Available Balance</span>
-                                <span className="text-3xl font-black text-indigo-600 font-mono tracking-tighter leading-none">${user.balance.toLocaleString()}</span>
+                            <div className="flex items-center space-x-2.5">
+                                <button
+                                    onClick={() => setIsWalletModalOpen(true)}
+                                    className="flex items-center space-x-1.5 h-10 px-4 bg-[#4C6EF5] text-white rounded-lg hover:bg-indigo-700 transition-all font-semibold text-xs shadow-sm cursor-pointer"
+                                >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>Top-up Wallet</span>
+                                </button>
+                                <Link
+                                    href="/company/distribution"
+                                    className="flex items-center space-x-1.5 h-10 px-4 bg-white border border-[#E4E7EC] text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-semibold text-xs shadow-sm"
+                                >
+                                    <Send className="w-3.5 h-3.5 text-gray-400" />
+                                    <span>New Distribution</span>
+                                </Link>
                             </div>
                         )}
 
-                        <div className="flex items-center space-x-4">
-                            <div
-                                onClick={() => setIsProfileOpen(true)}
-                                className="flex items-center space-x-4 p-2 hover:bg-gray-50 rounded-2xl cursor-pointer transition-all group"
-                            >
-                                <div className="text-right hidden sm:block">
-                                    <p className="text-lg font-black text-gray-900 leading-tight group-hover:text-indigo-600 transition-colors">{user.name}</p>
-                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">{user.companyName || user.email}</p>
-                                </div>
-                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center text-indigo-700 font-black text-xl border-4 border-white shadow-xl group-hover:scale-105 transition-transform">
-                                    {user.name.charAt(0)}
-                                </div>
+                        {/* Balance display */}
+                        {user.role === UserRole.COMPANY && (
+                            <div className="hidden md:flex flex-col items-end px-3 py-1 border-l border-gray-150">
+                                <span className="text-[9px] text-[#6B7280] font-semibold uppercase tracking-wider">Available Balance</span>
+                                <span className="text-sm font-bold text-[#1A3E78] font-mono">${user.balance.toLocaleString()}</span>
                             </div>
+                        )}
 
-                            <button
-                                onClick={logout}
-                                className="p-4 text-red-500 hover:bg-red-50 rounded-2xl transition-all border border-transparent hover:border-red-100"
-                                title="Sign Out"
-                            >
-                                <LogOut className="w-6 h-6" />
-                            </button>
+                        {/* Profile card with avatar */}
+                        <div
+                            onClick={() => setIsProfileOpen(true)}
+                            className="flex items-center space-x-2.5 p-1 hover:bg-gray-50 rounded-lg cursor-pointer transition-all border border-transparent"
+                        >
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs border border-indigo-200 shadow-sm">
+                                {user.name.charAt(0)}
+                            </div>
+                            <div className="hidden lg:block text-left">
+                                <p className="text-xs font-semibold text-[#1A1A1A] leading-tight">{user.name}</p>
+                                <p className="text-[9px] text-[#6B7280] font-medium">{user.companyName || user.email}</p>
+                            </div>
                         </div>
                     </div>
                 </header>
 
+                {/* Content Area */}
                 <div className="flex-1 overflow-y-auto">
-                    <div className="max-w-[1600px] mx-auto p-8 lg:p-10">
+                    <div className="max-w-[1600px] mx-auto p-6 md:p-8">
                         {children}
                     </div>
                 </div>
@@ -186,6 +232,12 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) =
                 isOpen={isProfileOpen}
                 onClose={() => setIsProfileOpen(false)}
                 user={user}
+            />
+
+            <WalletModal
+                isOpen={isWalletModalOpen}
+                onClose={() => setIsWalletModalOpen(false)}
+                currentBalance={user.balance}
             />
         </div>
     );
