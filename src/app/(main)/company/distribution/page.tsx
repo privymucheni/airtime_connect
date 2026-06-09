@@ -36,10 +36,7 @@ const CompanyDistribution: React.FC = () => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [validationInfo, setValidationInfo] = useState<{ skipped: number; total: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  if (!user) return null;
 
   // ─── Duplicate detection ───────────────────────────────────────────────────
   const duplicateMap = useMemo(() => {
@@ -62,13 +59,14 @@ const CompanyDistribution: React.FC = () => {
     duplicateMap.forEach((indices) => indices.forEach((i) => set.add(i)));
     return set;
   }, [duplicateMap]);
+
+  if (!user) return null;
   // ──────────────────────────────────────────────────────────────────────────
 
   const processFile = (file: File) => {
     setIsProcessingCsv(true);
     setError(null);
     setSuccessMessage(null);
-    setValidationInfo(null);
     setFileMeta(null);
 
     const reader = new FileReader();
@@ -79,7 +77,7 @@ const CompanyDistribution: React.FC = () => {
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
 
-        const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+        const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as unknown[][];
 
         if (rawRows.length === 0) {
           throw new Error('The uploaded file is empty.');
@@ -147,7 +145,6 @@ const CompanyDistribution: React.FC = () => {
         }
 
         setRecipients(parsedRecipients);
-        setValidationInfo({ skipped: skippedCount, total: rawRows.length - (headerRowIndex + 1) });
         
         // Capture File Metadata
         const detectedHeaders = (rawRows[headerRowIndex] || []).map(h => String(h || ''));
@@ -157,8 +154,8 @@ const CompanyDistribution: React.FC = () => {
           rows: parsedRecipients.length,
           columns: detectedHeaders.filter(h => h.trim() !== '')
         });
-      } catch (err: any) {
-        setError(err.message || 'Failed to parse file. Please check the format.');
+      } catch (err) {
+        setError((err as Error).message || 'Failed to parse file. Please check the format.');
       } finally {
         setIsProcessingCsv(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -235,12 +232,11 @@ const CompanyDistribution: React.FC = () => {
         setSuccessMessage(`Successfully distributed airtime to ${recipients.length} recipients.`);
         setRecipients([]);
         setFileMeta(null);
-        setValidationInfo(null);
         await update();
         setTimeout(() => router.push('/company/history'), 2500);
       }
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong during distribution.');
+    } catch (err) {
+      setError((err as Error).message || 'Something went wrong during distribution.');
     } finally {
       setIsExecuting(false);
     }
@@ -299,7 +295,6 @@ const CompanyDistribution: React.FC = () => {
                 setCurrentStep(1);
                 setRecipients([]);
                 setFileMeta(null);
-                setValidationInfo(null);
                 setError(null);
                 setSuccessMessage(null);
               }}
@@ -420,7 +415,7 @@ const CompanyDistribution: React.FC = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-50">
-              <p className="text-[10px] text-slate-400 font-medium">Ensure your file contains 'Phone Number' and 'Amount' columns.</p>
+              <p className="text-[10px] text-slate-400 font-medium">{"Ensure your file contains 'Phone Number' and 'Amount' columns."}</p>
               <button
                 onClick={downloadTemplate}
                 className="text-[10px] text-indigo-600 hover:text-indigo-750 font-bold flex items-center space-x-1.5 transition-colors uppercase tracking-widest cursor-pointer"

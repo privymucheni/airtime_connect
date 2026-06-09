@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import {
-  Building2, Mail, Lock, Bell, CreditCard, ChevronRight, Globe, CheckCircle2,
+  Building2, Mail, Bell, CreditCard, ChevronRight, CheckCircle2,
   AlertCircle, Loader2, User as UserIcon, Shield, Key, Eye, EyeOff, Copy, Check,
   RefreshCw, Layers
 } from 'lucide-react';
@@ -60,8 +60,8 @@ const CompanySettings: React.FC = () => {
       if (res.success) {
         setMessage({ type: 'success', text: 'Profile updated successfully!' });
       }
-    } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Failed to update profile' });
+    } catch (error) {
+      setMessage({ type: 'error', text: (error as Error).message || 'Failed to update profile' });
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(null), 3000);
