@@ -6,15 +6,31 @@ import { Recipient } from '@/types';
 import { formatPhoneNumber, displayPhoneNumber } from '@/lib/phoneFormatter';
 import {
   Upload, FileText, CheckCircle2, Send, Download,
-  AlertCircle, AlertTriangle, X, Trash2
+  AlertCircle, AlertTriangle, X, Trash2, ArrowRight, ArrowLeft, Loader2, Plus
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { distributeAirtime } from '@/actions/company';
 import { useRouter } from 'next/navigation';
+import WalletModal from '@/components/WalletModal';
 
 const CompanyDistribution: React.FC = () => {
   const { user, update } = useAuth();
   const router = useRouter();
+  
+  // Guided Workflow Step state (1: Upload, 2: Review, 3: Confirm)
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+
+  const getGreeting = (name: string) => {
+    const hour = new Date().getHours();
+    if (hour < 12) return `Good morning, ${name}`;
+    if (hour < 18) return `Good afternoon, ${name}`;
+    return `Good evening, ${name}`;
+  };
+  
+  // File metadata state
+  const [fileMeta, setFileMeta] = useState<{ name: string; size: number; rows: number; columns: string[] } | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessingCsv, setIsProcessingCsv] = useState(false);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -26,7 +42,6 @@ const CompanyDistribution: React.FC = () => {
   if (!user) return null;
 
   // ─── Duplicate detection ───────────────────────────────────────────────────
-  // Build a map of phoneNumber → indices that share it
   const duplicateMap = useMemo(() => {
     const map = new Map<string, number[]>();
     recipients.forEach((r, i) => {
@@ -34,7 +49,6 @@ const CompanyDistribution: React.FC = () => {
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(i);
     });
-    // Keep only entries that appear more than once
     const dupes = new Map<string, number[]>();
     map.forEach((indices, phone) => {
       if (indices.length > 1) dupes.set(phone, indices);
@@ -50,14 +64,12 @@ const CompanyDistribution: React.FC = () => {
   }, [duplicateMap]);
   // ──────────────────────────────────────────────────────────────────────────
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const processFile = (file: File) => {
     setIsProcessingCsv(true);
     setError(null);
     setSuccessMessage(null);
     setValidationInfo(null);
+    setFileMeta(null);
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -136,26 +148,69 @@ const CompanyDistribution: React.FC = () => {
 
         setRecipients(parsedRecipients);
         setValidationInfo({ skipped: skippedCount, total: rawRows.length - (headerRowIndex + 1) });
+        
+        // Capture File Metadata
+        const detectedHeaders = (rawRows[headerRowIndex] || []).map(h => String(h || ''));
+        setFileMeta({
+          name: file.name,
+          size: file.size,
+          rows: parsedRecipients.length,
+          columns: detectedHeaders.filter(h => h.trim() !== '')
+        });
       } catch (err: any) {
         setError(err.message || 'Failed to parse file. Please check the format.');
       } finally {
         setIsProcessingCsv(false);
-        // Reset file input so the same file can be re-uploaded after clearing
         if (fileInputRef.current) fileInputRef.current.value = '';
       }
     };
     reader.readAsArrayBuffer(file);
   };
 
-  // Remove a single row by index
-  const handleRemoveRecipient = (index: number) => {
-    setRecipients((prev) => prev.filter((_, i) => i !== index));
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) processFile(file);
   };
 
-  // Remove ALL duplicate occurrences of a number (keeping none)
+  // Drag and Drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      if (['csv', 'xlsx', 'xls'].includes(extension || '')) {
+        processFile(file);
+      } else {
+        setError('Invalid file format. Please upload a CSV or Excel spreadsheet.');
+      }
+    }
+  };
+
+  const handleRemoveRecipient = (index: number) => {
+    setRecipients((prev) => prev.filter((_, i) => i !== index));
+    if (fileMeta) {
+      setFileMeta({ ...fileMeta, rows: fileMeta.rows - 1 });
+    }
+  };
+
   const handleRemoveAllDuplicates = () => {
     const dupePhones = new Set(duplicateMap.keys());
-    setRecipients((prev) => prev.filter((r) => !dupePhones.has(r.phoneNumber.trim())));
+    const remaining = recipients.filter((r) => !dupePhones.has(r.phoneNumber.trim()));
+    setRecipients(remaining);
+    if (fileMeta) {
+      setFileMeta({ ...fileMeta, rows: remaining.length });
+    }
   };
 
   const totalToDistribute = recipients.reduce((sum, r) => sum + r.amount, 0);
@@ -179,9 +234,10 @@ const CompanyDistribution: React.FC = () => {
       if (result.success) {
         setSuccessMessage(`Successfully distributed airtime to ${recipients.length} recipients.`);
         setRecipients([]);
+        setFileMeta(null);
         setValidationInfo(null);
         await update();
-        setTimeout(() => router.push('/company/history'), 3000);
+        setTimeout(() => router.push('/company/history'), 2500);
       }
     } catch (err: any) {
       setError(err.message || 'Something went wrong during distribution.');
@@ -201,95 +257,148 @@ const CompanyDistribution: React.FC = () => {
     XLSX.writeFile(wb, 'Airtime_Distribution_Template.xlsx');
   };
 
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
-          Bulk <span className="text-indigo-600">Distribution</span>
-        </h2>
-        <p className="text-lg text-gray-500 font-medium">
-          Upload your spreadsheet to credit multiple numbers instantly.
-        </p>
-      </div>
-
-      {/* General error */}
-      {error && (
-        <div className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center space-x-3 text-red-700 animate-in fade-in zoom-in-95 duration-300">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm font-bold">{error}</p>
+    <div className="max-w-[900px] mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-16">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-slate-100 pb-6">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+            {getGreeting(user.name.split(' ')[0])}
+          </h2>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Manage your airtime distributions efficiently and securely.
+          </p>
         </div>
-      )}
 
-      {/* Success */}
-      {successMessage && (
-        <div className="bg-green-50 border border-green-100 p-4 rounded-2xl flex items-center space-x-3 text-green-700 animate-in fade-in zoom-in-95 duration-300">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm font-bold">{successMessage}</p>
-        </div>
-      )}
+        <div className="flex items-center space-x-4">
+          {/* Wallet Balance Card */}
+          <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-sm flex flex-col justify-center min-w-[160px] relative overflow-hidden">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Available Balance</span>
+            <span className="text-lg font-bold text-indigo-600 font-mono mt-1">${user.balance.toLocaleString()}</span>
+          </div>
 
-      {/* ── Duplicate warning banner ── */}
-      {hasDuplicates && (
-        <div className="bg-amber-50 border-2 border-amber-200 p-5 rounded-2xl animate-in fade-in zoom-in-95 duration-300">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start space-x-3">
-              <div className="p-2 bg-amber-100 rounded-xl flex-shrink-0">
-                <AlertTriangle className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="font-black text-amber-900 text-sm uppercase tracking-widest mb-1">
-                  Duplicate Phone Numbers Detected — Distribution Blocked
-                </p>
-                <p className="text-xs text-amber-700 font-bold mb-3">
-                  The following numbers appear more than once. Remove the duplicates to proceed.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {Array.from(duplicateMap.entries()).map(([phone, indices]) => (
-                    <span
-                      key={phone}
-                      className="inline-flex items-center px-3 py-1 bg-amber-100 border border-amber-300 text-amber-800 text-xs font-black rounded-xl font-mono"
-                    >
-                      {phone}
-                      <span className="ml-1.5 bg-amber-300 text-amber-900 rounded-md px-1.5 py-0.5 text-[10px]">
-                        ×{indices.length}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+          {/* Action Buttons */}
+          <div className="flex flex-col space-y-2">
             <button
-              onClick={handleRemoveAllDuplicates}
-              title="Remove all duplicate rows"
-              className="flex-shrink-0 flex items-center space-x-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black rounded-xl transition-all uppercase tracking-widest shadow-md active:scale-95"
+              onClick={() => setIsWalletModalOpen(true)}
+              className="flex items-center space-x-1.5 h-9 px-4 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-all font-semibold text-xs shadow-sm cursor-pointer justify-center"
             >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Remove All Duplicates</span>
+              <Plus className="w-3.5 h-3.5 text-slate-400" />
+              <span>Top-up Wallet</span>
+            </button>
+            <button
+              onClick={() => {
+                setCurrentStep(1);
+                setRecipients([]);
+                setFileMeta(null);
+                setValidationInfo(null);
+                setError(null);
+                setSuccessMessage(null);
+              }}
+              className="flex items-center space-x-1.5 h-9 px-4 bg-indigo-650 text-white rounded-xl hover:bg-indigo-700 transition-all font-semibold text-xs shadow-sm shadow-indigo-600/10 cursor-pointer justify-center"
+            >
+              <Send className="w-3.5 h-3.5 text-white/90" />
+              <span>New Distribution</span>
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Progress Flow bar */}
+      <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-sm">
+        <div className="flex items-center justify-between max-w-xl mx-auto">
+          {/* Step 1 */}
+          <div className="flex items-center space-x-2">
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+              currentStep > 1 
+                ? 'bg-emerald-100 border border-emerald-200 text-emerald-700' 
+                : 'bg-indigo-600 border border-indigo-600 text-white'
+            }`}>
+              {currentStep > 1 ? '✓' : '1'}
+            </span>
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${
+              currentStep === 1 ? 'text-indigo-600' : 'text-slate-400'
+            }`}>Upload</span>
+          </div>
+
+          <div className="h-0.5 w-16 bg-slate-150"></div>
+
+          {/* Step 2 */}
+          <div className="flex items-center space-x-2">
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+              currentStep > 2 
+                ? 'bg-emerald-100 border border-emerald-200 text-emerald-700' 
+                : currentStep === 2 
+                  ? 'bg-indigo-600 border border-indigo-600 text-white' 
+                  : 'bg-slate-50 border border-slate-200 text-slate-400'
+            }`}>
+              {currentStep > 2 ? '✓' : '2'}
+            </span>
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${
+              currentStep === 2 ? 'text-indigo-600' : 'text-slate-400'
+            }`}>Review</span>
+          </div>
+
+          <div className="h-0.5 w-16 bg-slate-150"></div>
+
+          {/* Step 3 */}
+          <div className="flex items-center space-x-2">
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+              currentStep === 3 
+                ? 'bg-indigo-600 border border-indigo-600 text-white' 
+                : 'bg-slate-50 border border-slate-200 text-slate-400'
+            }`}>
+              3
+            </span>
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${
+              currentStep === 3 ? 'text-indigo-600' : 'text-slate-400'
+            }`}>Confirm</span>
+          </div>
+        </div>
+      </div>
+
+      {/* General error or Success Banners */}
+      {error && (
+        <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-center space-x-3 text-red-700 animate-in fade-in zoom-in-95 duration-200">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <p className="text-xs font-semibold">{error}</p>
+        </div>
       )}
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-          <h3 className="font-bold text-lg flex items-center space-x-2 text-gray-900">
-            <Upload className="w-5 h-5 text-indigo-600" />
-            <span>Upload Contact Sheet</span>
-          </h3>
-          <button
-            onClick={downloadTemplate}
-            className="text-xs text-indigo-600 hover:text-indigo-700 font-black flex items-center space-x-1 transition-colors uppercase tracking-widest"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download Template</span>
-          </button>
+      {successMessage && (
+        <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl flex items-center space-x-3 text-emerald-700 animate-in fade-in zoom-in-95 duration-200">
+          <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+          <p className="text-xs font-semibold">{successMessage}</p>
         </div>
+      )}
 
-        <div className="p-8">
-          {!recipients.length ? (
+      {/* ── STEP 1: UPLOAD FILE ── */}
+      {currentStep === 1 && (
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Bulk Distribution</h3>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">Upload your spreadsheet to credit multiple numbers instantly.</p>
+          </div>
+          
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden p-6 space-y-6">
             <div
-              className="border-2 border-dashed border-gray-200 rounded-2xl p-16 text-center hover:border-indigo-300 hover:bg-indigo-50/30 transition-all cursor-pointer group"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-xl p-12 text-center transition-all cursor-pointer group ${
+                isDragOver 
+                  ? 'border-indigo-500 bg-indigo-50/20' 
+                  : 'border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/10'
+              }`}
             >
               <input
                 type="file"
@@ -298,177 +407,267 @@ const CompanyDistribution: React.FC = () => {
                 onChange={handleFileUpload}
                 accept=".csv,.xlsx,.xls"
               />
-              <div className="bg-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform border border-gray-50">
+              <div className="bg-slate-50 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform border border-slate-100/50 shadow-sm">
                 {isProcessingCsv ? (
-                  <div className="w-6 h-6 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                  <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
                 ) : (
-                  <FileText className="w-8 h-8 text-indigo-600" />
+                  <Upload className="w-5 h-5 text-indigo-600" />
                 )}
               </div>
-              <h4 className="text-xl font-bold text-gray-900">Click to upload or drag &amp; drop</h4>
-              <p className="text-sm text-gray-400 font-medium max-w-sm mx-auto mt-2">
-                Supported: CSV, XLS, XLSX. Ensure your file contains 'Phone Number' and 'Amount'
-                columns.
-              </p>
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Upload Contact Sheet</h4>
+              <p className="text-[10px] text-slate-400 mt-1 font-medium">Click to upload or drag &amp; drop</p>
+              <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded mt-3 inline-block uppercase tracking-wider">CSV, XLS, XLSX formats</span>
             </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Status bar */}
-              <div
-                className={`flex items-center justify-between p-5 rounded-2xl ${hasDuplicates
-                    ? 'bg-amber-50 border border-amber-200'
-                    : 'bg-indigo-50 border border-indigo-100'
-                  }`}
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-50">
+              <p className="text-[10px] text-slate-400 font-medium">Ensure your file contains 'Phone Number' and 'Amount' columns.</p>
+              <button
+                onClick={downloadTemplate}
+                className="text-[10px] text-indigo-600 hover:text-indigo-750 font-bold flex items-center space-x-1.5 transition-colors uppercase tracking-widest cursor-pointer"
               >
-                <div className={`flex items-center space-x-3 ${hasDuplicates ? 'text-amber-700' : 'text-indigo-700'}`}>
-                  <div className={`p-2 rounded-lg ${hasDuplicates ? 'bg-amber-600' : 'bg-indigo-600'} text-white`}>
-                    {hasDuplicates ? (
-                      <AlertTriangle className="w-5 h-5" />
-                    ) : (
-                      <CheckCircle2 className="w-5 h-5" />
-                    )}
+                <Download className="w-3.5 h-3.5" />
+                <span>Download Template</span>
+              </button>
+            </div>
+          </div>
+
+          {/* File Summary Card */}
+          {fileMeta && (
+            <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-5 animate-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <FileText className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className={`font-black text-lg ${hasDuplicates ? 'text-amber-900' : 'text-indigo-900'}`}>
-                      {recipients.length} Recipients Loaded
-                      {hasDuplicates && (
-                        <span className="ml-2 text-amber-600 text-sm">
-                          — {duplicateIndices.size} duplicate row{duplicateIndices.size !== 1 ? 's' : ''} flagged
-                        </span>
-                      )}
-                    </p>
-                    <p className={`text-sm font-bold uppercase tracking-wider ${hasDuplicates ? 'text-amber-600' : 'text-indigo-600/80'}`}>
-                      {hasDuplicates
-                        ? 'Resolve duplicates to enable distribution'
-                        : validationInfo && validationInfo.skipped > 0
-                          ? `${validationInfo.total} rows, ${validationInfo.skipped} skipped`
-                          : 'Ready for processing'}
-                    </p>
+                    <h3 className="text-xs font-bold text-slate-800 truncate max-w-xs">{fileMeta.name}</h3>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">{formatBytes(fileMeta.size)}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setRecipients([]);
-                    setValidationInfo(null);
-                    setError(null);
-                    setSuccessMessage(null);
-                  }}
-                  className="px-4 py-2 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                >
-                  Clear List
-                </button>
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10">
+                  Ready for Review
+                </span>
               </div>
 
-              {/* Recipients table */}
-              <div className="overflow-hidden border border-gray-100 rounded-2xl shadow-sm">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50/50 border-b border-gray-100">
-                    <tr>
-                      <th className="px-6 py-4 text-sm font-black text-gray-400 uppercase tracking-widest">
-                        Employee Name
-                      </th>
-                      <th className="px-6 py-4 text-sm font-black text-gray-400 uppercase tracking-widest">
-                        Phone Number
-                      </th>
-                      <th className="px-6 py-4 text-sm font-black text-gray-400 uppercase tracking-widest text-right">
-                        Credit Amount
-                      </th>
-                      <th className="px-6 py-4 text-sm font-black text-gray-400 uppercase tracking-widest text-center">
-                        Remove
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {recipients.map((r, i) => {
-                      const isDupe = duplicateIndices.has(i);
-                      return (
-                        <tr
-                          key={i}
-                          className={`transition-colors ${isDupe
-                              ? 'bg-red-50/60 hover:bg-red-50'
-                              : 'hover:bg-gray-50/30'
-                            }`}
-                        >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-2">
-                              <span className={`text-base font-black ${isDupe ? 'text-red-700' : 'text-gray-900'}`}>
-                                {r.name}
-                              </span>
-                              {isDupe && (
-                                <span className="inline-flex items-center space-x-1 px-2 py-0.5 bg-red-100 border border-red-200 text-red-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
-                                  <AlertTriangle className="w-2.5 h-2.5" />
-                                  <span>Duplicate</span>
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className={`px-6 py-4 text-base font-bold font-mono ${isDupe ? 'text-red-600' : 'text-gray-500'}`}>
-                            {displayPhoneNumber(r.phoneNumber)}
-                          </td>
-                          <td className={`px-6 py-4 text-right font-black text-lg tracking-tight ${isDupe ? 'text-red-600' : 'text-indigo-600'}`}>
-                            ${r.amount.toLocaleString()}
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <button
-                              onClick={() => handleRemoveRecipient(i)}
-                              title="Remove this row"
-                              className={`inline-flex items-center justify-center w-8 h-8 rounded-xl transition-all active:scale-90 ${isDupe
-                                  ? 'bg-red-100 text-red-500 hover:bg-red-600 hover:text-white border border-red-200'
-                                  : 'bg-gray-100 text-gray-400 hover:bg-red-600 hover:text-white border border-gray-200'
-                                }`}
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Total + Execute */}
-              <div className="bg-slate-900 p-6 rounded-2xl flex items-center justify-between text-white">
-                <div>
-                  <p className="text-gray-400 text-[10px] uppercase font-medium tracking-[0.2em] mb-1">
-                    Grand Total Cost
-                  </p>
-                  <p className="text-3xl font-black tracking-tight text-white">
-                    ${totalToDistribute.toLocaleString()}
-                  </p>
-                  {!hasSufficientBalance && (
-                    <p className="text-red-400 text-xs mt-2 font-bold bg-red-400/10 px-3 py-1.5 rounded-xl inline-block uppercase tracking-wider">
-                      Insufficient balance
-                    </p>
-                  )}
-                  {hasDuplicates && (
-                    <p className="text-amber-400 text-xs mt-2 font-bold bg-amber-400/10 px-3 py-1.5 rounded-xl inline-block uppercase tracking-wider">
-                      Resolve duplicates to proceed
-                    </p>
-                  )}
+              <div className="grid grid-cols-2 gap-4 text-left">
+                <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Detected Rows</span>
+                  <p className="text-sm font-bold text-slate-800 font-mono mt-0.5">{fileMeta.rows} recipients</p>
                 </div>
+                <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Matched Columns</span>
+                  <p className="text-xs font-semibold text-slate-600 truncate mt-0.5">{fileMeta.columns.join(', ')}</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
                 <button
-                  onClick={handleExecute}
-                  disabled={isExecuting || !hasSufficientBalance || hasDuplicates}
-                  className={`px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-2xl shadow-xl shadow-indigo-900/40 transition-all flex items-center space-x-2 transform ${isExecuting || !hasSufficientBalance || hasDuplicates
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:-translate-y-1 active:scale-95'
-                    }`}
+                  onClick={() => setCurrentStep(2)}
+                  className="flex items-center space-x-1.5 px-4 py-2 bg-indigo-650 text-white rounded-xl hover:bg-indigo-700 font-semibold text-xs shadow-md shadow-indigo-600/10 active:scale-95 transition-all cursor-pointer"
                 >
-                  {isExecuting ? (
-                    <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Send className="w-5 h-5" />
-                  )}
-                  <span className="uppercase tracking-widest">
-                    {isExecuting ? 'Processing...' : 'Execute'}
-                  </span>
+                  <span>Proceed to Review</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
           )}
         </div>
-      </div>
+      )}
+
+      {/* ── STEP 2: REVIEW DATA ── */}
+      {currentStep === 2 && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Duplicate warnings inside review if found */}
+          {hasDuplicates && (
+            <div className="bg-amber-50 border border-amber-200 p-5 rounded-2xl">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start space-x-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-bold text-amber-900 text-xs uppercase tracking-wider mb-1">Duplicate Numbers Flagged</h4>
+                    <p className="text-[10px] text-amber-700 font-semibold mb-3">
+                      The numbers below appear multiple times. Discard the duplicates to unlock confirmation.
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Array.from(duplicateMap.entries()).map(([phone, indices]) => (
+                        <span key={phone} className="inline-flex items-center px-2 py-0.5 bg-amber-100 border border-amber-300 text-amber-800 text-[10px] font-bold rounded-lg font-mono">
+                          {phone} <span className="ml-1 text-[8px] bg-amber-300 text-amber-900 px-1 rounded">×{indices.length}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleRemoveAllDuplicates}
+                  className="flex-shrink-0 flex items-center space-x-1 px-3 py-1.5 bg-amber-600 hover:bg-amber-750 text-white text-[10px] font-bold rounded-lg transition-all active:scale-95 cursor-pointer uppercase tracking-wider"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Remove Duplicates</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Table Directory Card */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-slate-50 flex items-center justify-between">
+              <h3 className="font-bold text-xs text-slate-800">Recipients Preview (First 10 Rows)</h3>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{recipients.length} Loaded</span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-50/75 border-b border-slate-100">
+                  <tr>
+                    <th className="px-6 py-3 text-[9px] font-bold text-slate-500 uppercase tracking-widest">Recipient Name</th>
+                    <th className="px-6 py-3 text-[9px] font-bold text-slate-500 uppercase tracking-widest">Phone Number</th>
+                    <th className="px-6 py-3 text-[9px] font-bold text-slate-500 uppercase tracking-widest text-right">Amount</th>
+                    <th className="px-6 py-3 text-[9px] font-bold text-slate-500 uppercase tracking-widest text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {recipients.slice(0, 10).map((r, i) => {
+                    const isDupe = duplicateIndices.has(i);
+                    return (
+                      <tr key={i} className={`transition-colors hover:bg-slate-50/40 ${isDupe ? 'bg-rose-50/50 hover:bg-rose-50' : 'odd:bg-white even:bg-slate-50/20'}`}>
+                        <td className="px-6 py-3">
+                          <div className="flex items-center space-x-2">
+                            <span className={`text-xs font-semibold ${isDupe ? 'text-rose-700' : 'text-slate-800'}`}>{r.name}</span>
+                            {isDupe && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 bg-rose-100 border border-rose-200 text-rose-600 rounded text-[8px] font-bold uppercase tracking-wider">
+                                Duplicate
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className={`px-6 py-3 text-xs font-semibold font-mono ${isDupe ? 'text-rose-600' : 'text-slate-500'}`}>
+                          {displayPhoneNumber(r.phoneNumber)}
+                        </td>
+                        <td className={`px-6 py-3 text-right text-xs font-bold font-mono ${isDupe ? 'text-rose-600' : 'text-indigo-600'}`}>
+                          ${r.amount.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-3 text-center">
+                          <button
+                            onClick={() => handleRemoveRecipient(i)}
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-all active:scale-90 cursor-pointer border border-transparent hover:border-rose-100"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {recipients.length > 10 && (
+              <div className="p-4 bg-slate-50/50 text-center border-t border-slate-100">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">... and {recipients.length - 10} more rows loaded ...</p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-between pt-2">
+            <button
+              onClick={() => setCurrentStep(1)}
+              className="flex items-center space-x-1.5 px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-55 font-semibold text-xs active:scale-95 transition-all cursor-pointer bg-white"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Upload</span>
+            </button>
+            <button
+              onClick={() => setCurrentStep(3)}
+              disabled={hasDuplicates}
+              className="flex items-center space-x-1.5 px-4 py-2 bg-indigo-650 text-white rounded-xl hover:bg-indigo-750 font-semibold text-xs shadow-md shadow-indigo-600/10 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <span>Proceed to Confirm</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── STEP 3: CONFIRM ── */}
+      {currentStep === 3 && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Cost Summary Card */}
+            <div className="md:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-6">
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Distribution Summary</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">Summary of charges and loaded recipients</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Total Recipients</span>
+                  <p className="text-xl font-bold text-slate-800 font-mono mt-1">{recipients.length}</p>
+                </div>
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Grand Total Cost</span>
+                  <p className="text-xl font-bold text-indigo-650 font-mono mt-1">${totalToDistribute.toLocaleString()}</p>
+                </div>
+              </div>
+
+              {/* Insufficient Funds Warning Block */}
+              {!hasSufficientBalance && (
+                <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-start space-x-3 text-red-750">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <div>
+                    <h5 className="font-bold text-xs text-red-950 uppercase tracking-wide">Insufficient Wallet Funds</h5>
+                    <p className="text-[10px] text-red-750 font-semibold mt-1">
+                      Your wallet balance of <strong>${user.balance.toLocaleString()}</strong> is less than the Grand Total of <strong>${totalToDistribute.toLocaleString()}</strong>.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Wallet Balance Widget Column */}
+            <div className="md:col-span-1 bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col justify-between h-48">
+              <div>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Available Balance</span>
+                <h3 className="text-2xl font-bold text-slate-900 font-mono tracking-tight mt-1.5">${user.balance.toLocaleString()}</h3>
+                <p className="text-[9px] text-slate-400 font-semibold mt-1 truncate">Portal: {user.companyName || user.name}</p>
+              </div>
+              <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl">
+                <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600">Fintech Secured SSL</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-between pt-2">
+            <button
+              onClick={() => setCurrentStep(2)}
+              className="flex items-center space-x-1.5 px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-55 font-semibold text-xs active:scale-95 transition-all cursor-pointer bg-white"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Review</span>
+            </button>
+            <button
+              onClick={handleExecute}
+              disabled={isExecuting || !hasSufficientBalance || hasDuplicates}
+              className={`flex items-center space-x-2 px-5 py-2.5 bg-indigo-650 text-white rounded-xl hover:bg-indigo-700 font-semibold text-xs shadow-md shadow-indigo-600/10 active:scale-95 transition-all cursor-pointer disabled:opacity-50`}
+            >
+              {isExecuting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4 text-white/95" />
+              )}
+              <span>{isExecuting ? 'Distributing...' : 'Send Distribution'}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Wallet top up modal */}
+      <WalletModal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+        currentBalance={user.balance}
+      />
     </div>
   );
 };

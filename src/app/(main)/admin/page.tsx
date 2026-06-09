@@ -11,12 +11,17 @@ import {
   XCircle,
   Search,
   Download,
-  Filter,
   TrendingUp,
   Activity,
-  ArrowUpRight
+  ArrowUpRight,
+  ChevronDown,
+  FileText,
+  FileSpreadsheet,
+  RefreshCcw,
+  Tag,
+  Eye
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, AreaChart, Area } from 'recharts';
 import { getAdminDashboardData, updateUserStatus } from '@/actions/admin';
 import { UserStatus } from '@prisma/client';
 import Link from 'next/link';
@@ -24,7 +29,6 @@ import Link from 'next/link';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { ChevronDown, FileText, FileSpreadsheet } from 'lucide-react';
 
 const MOCK_REVENUE = [
   { name: 'Jan', rev: 45000, users: 120 },
@@ -34,6 +38,34 @@ const MOCK_REVENUE = [
   { name: 'May', rev: 55000, users: 210 },
   { name: 'Jun', rev: 67000, users: 230 },
 ];
+
+const CustomTooltip = ({ active, payload, label, prefix = '' }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-900 border border-slate-800 text-white p-3.5 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-150">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">{label}</p>
+        {payload.map((item: any, index: number) => (
+          <p key={index} className="text-xs font-semibold leading-relaxed">
+            {item.name}: <span className="font-mono font-bold text-indigo-400">{prefix}{item.value.toLocaleString()}</span>
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+const Sparkline = ({ data, dataKey, stroke }: { data: any[], dataKey: string, stroke: string }) => {
+  return (
+    <div className="h-10 w-24">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+          <Line type="monotone" dataKey={dataKey} stroke={stroke} strokeWidth={1.5} dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -61,7 +93,6 @@ const AdminDashboard: React.FC = () => {
   const exportToExcel = () => {
     if (!data) return;
 
-    // Sheet 1: Stats
     const statsData = [
       { Metric: 'Total Companies', Value: data.stats.companies },
       { Metric: 'Total Airtime Volume', Value: `$${data.stats.volume.toLocaleString()}` },
@@ -69,7 +100,6 @@ const AdminDashboard: React.FC = () => {
       { Metric: 'System Users', Value: data.stats.companies + 1 }
     ];
 
-    // Sheet 2: Recent Companies
     const companiesData = data.recentCompanies.map((c: any) => ({
       'Company Name': c.companyName || c.name,
       'Email': c.email,
@@ -94,7 +124,6 @@ const AdminDashboard: React.FC = () => {
 
     const doc = new jsPDF();
 
-    // Header
     doc.setFontSize(22);
     doc.setTextColor(99, 102, 241);
     doc.text("AirFlow Distribution Summary", 14, 22);
@@ -103,7 +132,6 @@ const AdminDashboard: React.FC = () => {
     doc.setTextColor(100);
     doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
 
-    // Platform Stats Table
     doc.setFontSize(14);
     doc.setTextColor(50);
     doc.text("Platform Performance Overview", 14, 45);
@@ -122,7 +150,6 @@ const AdminDashboard: React.FC = () => {
       styles: { fontSize: 11, cellPadding: 4 }
     });
 
-    // Recent Companies Table
     const lastY = (doc as any).lastAutoTable.finalY || 80;
     doc.setFontSize(14);
     doc.setTextColor(50);
@@ -163,9 +190,12 @@ const AdminDashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-500 font-medium tracking-widest uppercase text-[10px] font-black">Synchronizing Data Node...</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in duration-300">
+        <div className="relative flex items-center justify-center">
+          <div className="w-10 h-10 border-2 border-indigo-500/20 border-t-indigo-600 rounded-full animate-spin"></div>
+          <div className="absolute w-6 h-6 border border-indigo-500/10 rounded-full"></div>
+        </div>
+        <p className="text-xs font-semibold text-slate-500 mt-4 tracking-wider animate-pulse">Synchronizing Platform Overview...</p>
       </div>
     );
   }
@@ -177,235 +207,333 @@ const AdminDashboard: React.FC = () => {
   );
 
   return (
-    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-16">
+      {/* Top Bar with Breadcrumbs & Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Platform Intelligence</h2>
-          <p className="text-gray-500 font-medium text-lg">Real-time oversight of system health and enterprise activity.</p>
+          {/* Breadcrumbs */}
+          <nav className="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+            <span>Admin</span>
+            <span>/</span>
+            <span className="text-indigo-600">Overview</span>
+          </nav>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Platform Intelligence</h1>
+          <p className="text-xs font-medium text-slate-500 mt-0.5">Real-time oversight of system health and enterprise activity.</p>
         </div>
 
-        <div className="relative">
+        <div className="flex items-center space-x-2.5">
           <button
-            onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-            className="flex items-center space-x-3 px-8 py-5 bg-white text-gray-900 border-2 border-gray-100 rounded-2xl hover:bg-gray-50 font-black shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 text-lg group"
+            onClick={fetchData}
+            className="p-2.5 bg-white border border-slate-200 text-slate-500 rounded-xl hover:bg-slate-50 hover:text-indigo-600 transition-all shadow-sm active:scale-95 cursor-pointer"
+            title="Refresh Dashboard"
           >
-            <Download className="w-6 h-6 stroke-[3px] text-indigo-600 group-hover:translate-y-0.5 transition-transform" />
-            <span>Generate Reports</span>
-            <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExportDropdownOpen ? 'rotate-180' : ''}`} />
+            <RefreshCcw className="w-4 h-4" />
           </button>
+          
+          <div className="relative">
+            <button
+              onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+              className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold text-xs shadow-md shadow-indigo-600/10 hover:shadow-lg hover:shadow-indigo-600/20 active:scale-95 transition-all group cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-white/90 group-hover:translate-y-0.5 transition-transform" />
+              <span>Generate Reports</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isExportDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-          {isExportDropdownOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-white rounded-[1.5rem] shadow-2xl border border-gray-50 p-2 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
-              <button
-                onClick={exportToExcel}
-                className="w-full flex items-center space-x-3 px-4 py-4 text-sm font-black text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all"
-              >
-                <FileSpreadsheet className="w-5 h-5" />
-                <span>Excel Spreadsheet</span>
-              </button>
-              <button
-                onClick={exportToPDF}
-                className="w-full flex items-center space-x-3 px-4 py-4 text-sm font-black text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all"
-              >
-                <FileText className="w-5 h-5" />
-                <span>PDF Document</span>
-              </button>
+            {isExportDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-100 p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <button
+                  onClick={exportToExcel}
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50/50 hover:text-indigo-600 rounded-lg transition-all"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-slate-400" />
+                  <span>Excel Spreadsheet</span>
+                </button>
+                <button
+                  onClick={exportToPDF}
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50/50 hover:text-indigo-600 rounded-lg transition-all"
+                >
+                  <FileText className="w-4 h-4 text-slate-400" />
+                  <span>PDF Document</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Cards Grid (4-Column Layout) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* KPI 1: Total Registered Companies */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-36">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Companies</span>
+            <div className="p-2 bg-indigo-50/70 text-indigo-600 rounded-xl">
+              <Building2 className="w-4 h-4" />
             </div>
-          )}
+          </div>
+          <div className="flex items-end justify-between mt-2">
+            <div>
+              <p className="text-2xl font-bold text-slate-900 leading-none">{data?.stats?.companies || 0}</p>
+              <span className="inline-flex items-center text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2">
+                <TrendingUp className="w-3 h-3 mr-0.5" />
+                Live tracking
+              </span>
+            </div>
+            <Sparkline data={MOCK_REVENUE} dataKey="users" stroke="#4f46e5" />
+          </div>
+        </div>
+
+        {/* KPI 2: Total Funded Volume */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-36">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Funded Volume</span>
+            <div className="p-2 bg-emerald-50/70 text-emerald-600 rounded-xl">
+              <Activity className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="flex items-end justify-between mt-2">
+            <div>
+              <p className="text-2xl font-bold text-slate-900 leading-none">${(data?.stats?.volume || 0).toLocaleString()}</p>
+              <span className="inline-flex items-center text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2">
+                <TrendingUp className="w-3 h-3 mr-0.5" />
+                +18.5%
+              </span>
+            </div>
+            <Sparkline data={MOCK_REVENUE} dataKey="rev" stroke="#10b981" />
+          </div>
+        </div>
+
+        {/* KPI 3: Active Promo Codes */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-36">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Promo Codes</span>
+            <div className="p-2 bg-violet-50/70 text-violet-600 rounded-xl">
+              <Tag className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="flex items-end justify-between mt-2">
+            <div>
+              <p className="text-2xl font-bold text-slate-900 leading-none">{data?.stats?.promos || 0}</p>
+              <span className="inline-flex items-center text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full mt-2">
+                Running campaigns
+              </span>
+            </div>
+            <Sparkline data={MOCK_REVENUE} dataKey="users" stroke="#8b5cf6" />
+          </div>
+        </div>
+
+        {/* KPI 4: System Users */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-36">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">System Users</span>
+            <div className="p-2 bg-sky-50/70 text-sky-600 rounded-xl">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="flex items-end justify-between mt-2">
+            <div>
+              <p className="text-2xl font-bold text-slate-900 leading-none">{(data?.stats?.companies || 0) + 1}</p>
+              <span className="inline-flex items-center text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-full mt-2">
+                Admin included
+              </span>
+            </div>
+            <Sparkline data={MOCK_REVENUE} dataKey="users" stroke="#0ea5e9" />
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl w-fit mb-4">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Total Companies</p>
-          <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">{data?.stats?.companies || 0}</p>
-          <div className="mt-2 flex items-center text-[10px] font-medium text-green-600">
-            <TrendingUp className="w-3 h-3 mr-1" />
-            Live tracking
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-          <div className="p-3 bg-green-50 text-green-600 rounded-2xl w-fit mb-4">
-            <Activity className="w-6 h-6" />
-          </div>
-          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Total Funded Volume</p>
-          <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">${(data?.stats?.volume || 0).toLocaleString()}</p>
-          <div className="mt-2 flex items-center text-[10px] font-medium text-green-600">
-            <TrendingUp className="w-3 h-3 mr-1" />
-            +18.5%
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-          <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl w-fit mb-4">
-            <BarChart3 className="w-6 h-6" />
-          </div>
-          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">Active Promo Codes</p>
-          <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">{data?.stats?.promos || 0}</p>
-          <div className="mt-2 flex items-center text-[10px] font-medium text-blue-600">
-            Running campaigns
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl w-fit mb-4">
-            <Users className="w-6 h-6" />
-          </div>
-          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[0.2em] mb-1">System Users</p>
-          <p className="text-3xl font-black text-gray-900 mt-2 tracking-tight">{(data?.stats?.companies || 0) + 1}</p>
-          <div className="mt-2 flex items-center text-[10px] font-medium text-indigo-600">
-            Admin included
-          </div>
-        </div>
-      </div>
-
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        {/* Revenue Distribution Chart */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-lg">Revenue Distribution</h3>
-            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">Monthly View</span>
+            <div>
+              <h3 className="font-semibold text-slate-900 text-sm">Revenue Distribution</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">Monthly revenue view and system volume</p>
+            </div>
+            <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100/30 px-2 py-0.5 rounded-full uppercase tracking-wider">Monthly View</span>
           </div>
-          <div className="h-80">
+          <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={MOCK_REVENUE}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                />
-                <Line type="monotone" dataKey="rev" stroke="#6366f1" strokeWidth={4} dot={{ r: 6, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} />
-              </LineChart>
+              <AreaChart data={MOCK_REVENUE} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorRevGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }} tickFormatter={(v) => `$${v.toLocaleString()}`} />
+                <Tooltip content={<CustomTooltip prefix="$" />} cursor={{ stroke: '#e2e8f0', strokeWidth: 1 }} />
+                <Area type="monotone" dataKey="rev" name="Net Revenue" stroke="#4f46e5" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRevGrad)" />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        {/* New Company Sign-ups Chart */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-lg">New Company Sign-ups</h3>
-            <span className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full">Growth Trend</span>
+            <div>
+              <h3 className="font-semibold text-slate-900 text-sm">New Company Sign-ups</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">Total growth trend of onboarded systems</p>
+            </div>
+            <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100/30 px-2 py-0.5 rounded-full uppercase tracking-wider">Growth Trend</span>
           </div>
-          <div className="h-80">
+          <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={MOCK_REVENUE}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                <Tooltip
-                  cursor={{ fill: '#f3f4f6', radius: 8 }}
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                />
-                <Bar dataKey="users" fill="#6366f1" radius={[8, 8, 0, 0]} barSize={40} />
+              <BarChart data={MOCK_REVENUE} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorBarGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#4f46e5" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0.75} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc', radius: 4 }} />
+                <Bar dataKey="users" name="New Users" fill="url(#colorBarGrad)" radius={[4, 4, 0, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Companies Table Section */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+        {/* Table Header Section */}
+        <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
-            <h3 className="font-bold text-lg">Recently Registered Companies</h3>
-            <Link href="/admin/companies" className="p-1 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-              <ArrowUpRight className="w-5 h-5" />
-            </Link>
+            <h3 className="font-semibold text-slate-900 text-sm">Recently Registered Companies</h3>
           </div>
           <div className="flex items-center space-x-3 w-full md:w-auto">
-            <div className="relative flex-1 md:max-w-2xl">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+            <div className="relative flex-1 md:w-64">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Quick search..."
+                placeholder="Search by name or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-6 py-4 bg-white border-2 border-gray-100 focus:border-indigo-500 focus:bg-white rounded-2xl outline-none transition-all text-sm font-bold text-gray-900 shadow-sm placeholder:text-gray-400"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 focus:bg-white border border-transparent focus:border-indigo-500 rounded-xl outline-none transition-all text-xs font-medium text-slate-800 placeholder:text-slate-400"
               />
             </div>
           </div>
         </div>
 
+        {/* Table Container */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 border-b border-gray-100">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-slate-50/75 border-b border-slate-100 sticky top-0 z-10">
               <tr>
-                <th className="px-6 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Company Name</th>
-                <th className="px-6 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Onboarding Date</th>
-                <th className="px-6 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Account Balance</th>
-                <th className="px-6 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Security Status</th>
-                <th className="px-6 py-5 text-sm font-black text-gray-400 uppercase tracking-widest text-right">Control Actions</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Company Profile</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Onboarding Date</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Account Balance</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Security Status</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredCompanies.map((company: any) => (
-                <tr key={company.id} className="hover:bg-gray-50 transition-colors group">
-                  <td className="px-6 py-6">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-black text-xl shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
-                        {(company.companyName || company.name || '?').charAt(0).toUpperCase()}
+            <tbody className="divide-y divide-slate-100">
+              {filteredCompanies.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-16 text-center">
+                    <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
+                      <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-3 shadow-sm">
+                        <Search className="w-5 h-5" />
                       </div>
-                      <div>
-                        <p className="text-xl font-black text-gray-900 leading-none mb-1">{company.companyName || company.name}</p>
-                        <p className="text-base text-gray-400 font-bold">{company.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-6 font-medium">
-                    <p className="text-base font-bold text-gray-600">
-                      {new Date(company.createdAt).toLocaleDateString()}
-                    </p>
-                  </td>
-                  <td className="px-6 py-6">
-                    <p className="text-xl font-black text-gray-900 tracking-tight">${(company.wallet?.balance || 0).toLocaleString()}</p>
-                  </td>
-                  <td className="px-6 py-6">
-                    <span className={`inline-flex px-4 py-2 rounded-xl text-sm font-black uppercase tracking-wider ${company.status === UserStatus.ACTIVE ? 'bg-green-100 text-green-700' :
-                      company.status === UserStatus.PENDING ? 'bg-amber-100 text-amber-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                      {company.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-6 text-right">
-                    <div className="flex items-center justify-end space-x-3">
-                      {company.status === UserStatus.ACTIVE ? (
-                        <button
-                          onClick={() => handleStatusUpdate(company.id, UserStatus.SUSPENDED)}
-                          className="p-2.5 text-green-600 hover:bg-green-50 rounded-xl transition-all"
-                          title="Account is Active - Click to Suspend"
-                        >
-                          <CheckCircle2 className="w-6 h-6" />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleStatusUpdate(company.id, UserStatus.ACTIVE)}
-                          className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                          title="Account is Suspended - Click to Activate"
-                        >
-                          <XCircle className="w-6 h-6" />
-                        </button>
-                      )}
-                      <button className="p-2.5 text-gray-400 hover:bg-gray-100 rounded-xl transition-all">
-                        <MoreVertical className="w-6 h-6" />
-                      </button>
+                      <p className="text-xs font-semibold text-slate-900">No companies found</p>
+                      <p className="text-[10px] text-slate-400 mt-1">Try modifying your search query keywords.</p>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredCompanies.map((company: any) => (
+                  <tr key={company.id} className="hover:bg-slate-50/60 transition-colors odd:bg-white even:bg-slate-50/20 group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-3.5">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 border border-indigo-100/20">
+                          {(company.companyName || company.name || '?').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors leading-none mb-1">{company.companyName || company.name}</p>
+                          <p className="text-[10px] text-slate-400 font-medium font-mono">{company.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-xs text-slate-600 font-normal">
+                        {new Date(company.createdAt).toLocaleDateString()}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-xs font-semibold text-slate-950 font-mono">${(company.wallet?.balance || 0).toLocaleString()}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      {company.status === UserStatus.ACTIVE ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10">
+                          <span className="w-1 h-1 rounded-full bg-emerald-600 animate-pulse" />
+                          Active
+                        </span>
+                      ) : company.status === UserStatus.PENDING ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 ring-1 ring-amber-600/10">
+                          <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
+                          Pending
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 ring-1 ring-rose-600/10">
+                          <span className="w-1 h-1 rounded-full bg-rose-600" />
+                          Suspended
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end space-x-2.5">
+                        <Link
+                          href={`/admin/companies`}
+                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                          title="View Profile Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                        {company.status === UserStatus.ACTIVE ? (
+                          <button
+                            onClick={() => handleStatusUpdate(company.id, UserStatus.SUSPENDED)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all duration-200"
+                            title="Active - Click to Suspend"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleStatusUpdate(company.id, UserStatus.ACTIVE)}
+                            className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all duration-200"
+                            title="Suspended - Click to Activate"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
-        <div className="p-6 bg-gray-50 flex items-center justify-between border-t border-gray-100">
-          <p className="text-xs text-gray-500 font-bold">Showing {filteredCompanies.length} recent companies</p>
+        {/* Table Footer */}
+        <div className="p-4 md:p-6 bg-slate-50/70 flex items-center justify-between border-t border-slate-100">
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">Showing {filteredCompanies.length} recent companies</p>
           <Link
             href="/admin/companies"
-            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-black text-gray-700 hover:bg-gray-100 transition-all shadow-sm active:scale-95"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/10 hover:shadow-lg hover:shadow-indigo-600/20 active:scale-95 transition-all"
           >
-            Manage All
+            Manage All Companies
           </Link>
         </div>
       </div>
@@ -414,5 +542,3 @@ const AdminDashboard: React.FC = () => {
 };
 
 export default AdminDashboard;
-
-
