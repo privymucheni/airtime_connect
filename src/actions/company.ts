@@ -10,7 +10,8 @@ import { sendRecipientNotifications } from "@/lib/twilio";
 import { formatPhoneNumber } from "@/lib/phoneFormatter";
 
 function generateTransactionRef() {
-    const timestamp = new Date().getTime().toString().substring(1); // Remove first digit for length control
+    // Generate a unique 10-character reference (T + 6 digits of timestamp + 3 random digits)
+    const timestamp = Math.floor(Date.now() / 1000).toString().slice(-6);
     const random = Math.floor(100 + Math.random() * 900).toString();
     return `T${timestamp}${random}`;
 }
@@ -228,25 +229,32 @@ export async function distributeAirtime(data: { recipients: any[] }) {
     const userWithCompany = await prisma.user.findUnique({ where: { id: userId } });
     if (userWithCompany) {
         const companyName = userWithCompany.companyName || userWithCompany.name || "Unknown Company";
-        
-        // Send SMS notifications asynchronously (don't block the response)
-        sendRecipientNotifications(formattedRecipients, companyName, result.transactionId)
-            .then(() => {
+
+        try {
+            const smsResult = await sendRecipientNotifications(formattedRecipients, companyName, result.transactionId);
+            if (smsResult && smsResult.failureCount > 0) {
+                console.warn(`⚠️ SMS sent with some failures for transaction ${result.transactionId}: ${smsResult.successCount} succeeded, ${smsResult.failureCount} failed.`);
+                await createLog({
+                    type: 'SMS_ERROR',
+                    message: `SMS send warning: ${smsResult.successCount} succeeded, ${smsResult.failureCount} failed for transaction ${result.transactionId}`,
+                    userId
+                });
+            } else {
                 console.log(`✓ SMS notifications sent for transaction ${result.transactionId}`);
-                createLog({
+                await createLog({
                     type: 'SMS',
                     message: `SMS sent to ${formattedRecipients.length} recipients for transaction ${result.transactionId}`,
                     userId
-                }).catch(err => console.error('Failed to log SMS:', err));
-            })
-            .catch((err: Error) => {
-                console.error(`✗ SMS notification error for transaction ${result.transactionId}:`, err.message);
-                createLog({
-                    type: 'SMS_ERROR',
-                    message: `Failed to send SMS: ${err.message}`,
-                    userId
-                }).catch(logErr => console.error('Failed to log SMS error:', logErr));
+                });
+            }
+        } catch (err: any) {
+            console.error(`✗ SMS notification error for transaction ${result.transactionId}:`, err.message);
+            await createLog({
+                type: 'SMS_ERROR',
+                message: `Failed to send SMS: ${err.message}`,
+                userId
             });
+        }
     }
 
     revalidatePath("/company");

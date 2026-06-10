@@ -1,11 +1,5 @@
 import twilio from 'twilio';
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const fromPhoneNumber = process.env.TWILIO_FROM_PHONE_NUMBER;
-
-const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
-
 interface RecipientSMS {
     name: string;
     phoneNumber: string;
@@ -22,11 +16,17 @@ export async function sendRecipientNotifications(
     companyName: string,
     transactionId: string
 ) {
-    if (!client || !fromPhoneNumber) {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const fromPhoneNumber = process.env.TWILIO_FROM_PHONE_NUMBER;
+
+    if (!accountSid || !authToken || !fromPhoneNumber) {
         console.warn('⚠️ Twilio not configured. Skipping SMS notifications.');
-        console.warn(`Missing: ${!client ? 'Twilio client' : ''} ${!fromPhoneNumber ? 'fromPhoneNumber' : ''}`);
-        return;
+        console.warn(`Missing: ${!accountSid ? 'TWILIO_ACCOUNT_SID ' : ''}${!authToken ? 'TWILIO_AUTH_TOKEN ' : ''}${!fromPhoneNumber ? 'TWILIO_FROM_PHONE_NUMBER' : ''}`);
+        return { successCount: 0, failureCount: recipients.length, total: recipients.length };
     }
+
+    const client = twilio(accountSid, authToken);
 
     console.log(`📱 Starting SMS batch send: ${recipients.length} recipients, Transaction: ${transactionId}`);
 
@@ -42,7 +42,7 @@ export async function sendRecipientNotifications(
         const results = await Promise.allSettled(
             batch.map(async (recipient) => {
                 const message = await client.messages.create({
-                    body: `Airtime Connect: Hi ${recipient.name}, you have received $${recipient.amount.toFixed(2)} airtime from ${companyName}. Transaction ID: ${transactionId}. Thank you!`,
+                    body: `Airtime Connect: Hi ${recipient.name}, ${companyName} has sent you monthly airtime amounting to ${recipient.amount.toFixed(2)} american dollars. Ref ${transactionId}`,
                     from: fromPhoneNumber,
                     to: recipient.phoneNumber,
                 });
@@ -66,6 +66,7 @@ export async function sendRecipientNotifications(
     }
 
     console.log(`📊 SMS batch complete: ${successCount} sent, ${failureCount} failed out of ${recipients.length} total`);
+    return { successCount, failureCount, total: recipients.length };
 }
 
 

@@ -458,7 +458,7 @@ const CompanyDistribution: React.FC = () => {
               <div className="flex justify-end pt-2">
                 <button
                   onClick={() => setCurrentStep(2)}
-                  className="flex items-center space-x-1.5 px-4 py-2 bg-indigo-650 text-white rounded-xl hover:bg-indigo-700 font-semibold text-xs shadow-md shadow-indigo-600/10 active:scale-95 transition-all cursor-pointer"
+                  className="flex items-center space-x-1.5 px-4 py-2 bg-indigo-650 text-black rounded-xl hover:bg-indigo-700 font-semibold text-xs shadow-md shadow-indigo-600/10 active:scale-95 transition-all cursor-pointer"
                 >
                   <span>Proceed to Review</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -574,7 +574,7 @@ const CompanyDistribution: React.FC = () => {
             <button
               onClick={() => setCurrentStep(3)}
               disabled={hasDuplicates}
-              className="flex items-center space-x-1.5 px-4 py-2 bg-indigo-650 text-white rounded-xl hover:bg-indigo-750 font-semibold text-xs shadow-md shadow-indigo-600/10 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+              className="flex items-center space-x-1.5 px-4 py-2 bg-indigo-650 text-black rounded-xl hover:bg-indigo-750 font-semibold text-xs shadow-md shadow-indigo-600/10 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
             >
               <span>Proceed to Confirm</span>
               <ArrowRight className="w-3.5 h-3.5" />
