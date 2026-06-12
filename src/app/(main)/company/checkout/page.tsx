@@ -125,6 +125,7 @@ const CheckoutPage = () => {
         setCardErrors(prev => ({ ...prev, [field]: err }));
     };
     const [ecoCashNumber, setEcoCashNumber] = useState('');
+    const [txId, setTxId] = useState<string>('');
 
     const [modal, setModal] = useState<{ isOpen: boolean, title: string, message: string, type: 'error' | 'success' | 'info' }>({
         isOpen: false,
@@ -213,7 +214,10 @@ const CheckoutPage = () => {
         await new Promise(resolve => setTimeout(resolve, 2500));
 
         try {
-            await topUpWallet(amount, selectedMethod, promoData?.id);
+            const res = await topUpWallet(amount, selectedMethod, promoData?.id);
+            if (res && res.transactionId) {
+                setTxId(res.transactionId);
+            }
             await update();
             setStep('success');
         } catch (error: any) {
@@ -242,7 +246,7 @@ const CheckoutPage = () => {
                     <div className="w-full bg-gray-50 rounded-xl p-6 mb-8 text-left space-y-3">
                         <div className="flex justify-between text-sm">
                             <span className="text-gray-500">Transaction ID</span>
-                            <span className="text-gray-900 font-mono font-bold">TX-{Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
+                            <span className="text-gray-900 font-mono font-bold">{txId || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-gray-500">Payment method</span>
@@ -266,6 +270,7 @@ const CheckoutPage = () => {
                             setIsProcessing(false);
                             setPromoData(null);
                             setPromoCode('');
+                            setTxId('');
                         }}
                         className="mt-4 text-indigo-600 font-bold text-sm hover:underline"
                     >
